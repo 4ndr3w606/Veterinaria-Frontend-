@@ -11,6 +11,8 @@ import { Services } from "@/components/sections/Services";
 import { Visit } from "@/components/sections/Visit";
 import { Reviews } from "@/components/sections/Reviews";
 import { Booking } from "@/components/sections/Booking";
+import { AuthModal } from "./components/sections/Auth";
+import { CartDrawer, Catalog } from "./components/sections/Catalog";
 
 export default function App() {
   return (
@@ -23,11 +25,14 @@ export default function App() {
         <About />
         <Stats />
         <Services />
+         <Catalog />
         <Visit />
         <Reviews />
         <Booking />
       </main>
       <Footer />
+      <AuthModal />   
+      <CartDrawer /> 
       <Mascot />
     </div>
   );

@@ -44,8 +44,8 @@ export function Hero() {
 
       <div className="relative z-10 mx-auto grid min-h-svh max-w-6xl items-center gap-12 px-5 pt-32 pb-16 lg:grid-cols-[1.1fr_0.9fr]">
         <div>
-          <Badge variant="outline" className="enter mb-6 gap-2 rounded-full px-3 py-1 text-muted-foreground" style={vars({ "--i": 0 })}>
-            <span className="size-2 rounded-full bg-primary" /> Un lugar para sentirse en casa
+          <Badge variant="outline" className="enter mb-6 gap-3 rounded-full px-6 py-4 text-lg text-muted-foreground" style={vars({ "--i": 0 })}>
+            <span className="size-3 rounded-full bg-primary" /> Un lugar para sentirse en casa
           </Badge>
 
           <h1 aria-label={`${L1} ${L2}`} className="text-[clamp(3.2rem,9vw,7.5rem)] leading-[0.95] font-light tracking-tighter">
@@ -60,23 +60,23 @@ export function Hero() {
             Medicina veterinaria con ciencia, sensibilidad y mucho corazón. Mueve el cursor: dejarás huellas y la luz de Lúmina descubrirá las suyas.
           </p>
 
-          <div className="enter mt-8 flex flex-wrap items-center gap-4" style={vars({ "--i": 6 })}>
+          <div className="enter mt-8 flex flex-wrap items-center gap-5" style={vars({ "--i": 6 })}>
             <Magnetic>
-              <Button size="lg" className="rounded-full" onClick={() => go("cita")}><CalendarDays /> Agendar una cita</Button>
+              <Button size="lg" className="rounded-full px-7 py-4 text-lg" onClick={() => go("cita")}><CalendarDays className="size-5" /> Agendar una cita</Button>
             </Magnetic>
-            <Button size="lg" variant="ghost" className="rounded-full" onClick={() => go("servicios")}>Explorar servicios</Button>
+            <Button size="lg" variant="ghost" className="rounded-full px-7 py-4 text-lg" onClick={() => go("servicios")}>Explorar servicios</Button>
           </div>
 
           <div className="enter mt-12 flex items-center gap-4" style={vars({ "--i": 7 })}>
-            <div className="flex -space-x-3">
+            <div className="flex -space-x-4">
               {[["photo-1552053831-71594a27632d", "Golden"], ["photo-1514888286974-6c03e2ca1dba", "Gato"], ["photo-1543466835-00a7907e9de1", "Perro"]].map(([id, alt]) => (
-                <Avatar key={id} className="size-11 border-2 border-background">
+                <Avatar key={id} className="size-14 border-2 border-background">
                   <AvatarImage src={`https://images.unsplash.com/${id}?auto=format&fit=crop&w=100&q=80`} alt={alt} />
                   <AvatarFallback>{alt[0]}</AvatarFallback>
                 </Avatar>
               ))}
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-base text-muted-foreground">
               <strong className="text-foreground">Cuidado que se siente.</strong><br />Cada paciente es parte de la familia.
             </p>
           </div>

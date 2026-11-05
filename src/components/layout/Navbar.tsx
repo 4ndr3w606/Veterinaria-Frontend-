@@ -16,7 +16,7 @@ import { go } from "@/lib/utils";
 export function Navbar() {
   return (
     <header className="fixed inset-x-0 top-4 z-50 px-4">
-      <nav className="mx-auto flex max-w-5xl items-center justify-between rounded-full border bg-background/70 py-2 pr-2 pl-4 backdrop-blur-xl">
+      <nav className="mx-auto flex max-w-5xl items-center justify-between rounded-full border bg-background/70 py-3 pr-3 pl-5 backdrop-blur-xl justify-start text-lg">
         <button onClick={() => go("inicio")} aria-label="Volver al inicio">
           <Logo />
         </button>
@@ -27,7 +27,7 @@ export function Navbar() {
             <Button
               key={id}
               variant="ghost"
-              className="rounded-full text-muted-foreground hover:text-primary"
+       className="rounded-full px-4 text-base text-muted-foreground hover:text-primary md:text-lg"
               onClick={() => go(id)}
             >
               {label}
@@ -67,7 +67,7 @@ export function Navbar() {
                   render={
                     <Button
                       variant="ghost"
-                      className="justify-start text-base"
+                      className="justify-start text-base md:text-lg"
                       onClick={() => go(id)}
                     >
                       {label}
