@@ -1,19 +1,20 @@
 import { createContext, useContext, useEffect, useState, type ReactNode, type MouseEvent } from "react";
 
-export type Product = { id: number; name: string; cat: string; price: number; emoji: string; desc: string };
+export type Product = { id: number; name: string; cat: string; price: number; image: string; desc: string; featured?: boolean };
 export type Booking = { id: string; email: string; pet: string; species: string; service: string; date: string; time: string };
 type Account = { name: string; email: string; pass: string };
 
 export const PRODUCTS: Product[] = [
-  { id: 1, name: "Croquetas del bosque", cat: "Alimento", price: 89000, emoji: "🍖", desc: "Proteína real, sin colorantes." },
-  { id: 2, name: "Snacks de zanahoria", cat: "Alimento", price: 18000, emoji: "🥕", desc: "Crujientes y horneados." },
-  { id: 3, name: "Pelota luciérnaga", cat: "Juguetes", price: 24000, emoji: "🎾", desc: "Brilla en la oscuridad." },
-  { id: 4, name: "Ratón de catnip", cat: "Juguetes", price: 12000, emoji: "🐭", desc: "Para gatos cazadores." },
-  { id: 5, name: "Cama nido", cat: "Descanso", price: 135000, emoji: "🛏️", desc: "Felpa suave, lavable." },
-  { id: 6, name: "Collar reflectivo", cat: "Paseo", price: 32000, emoji: "🦮", desc: "Visible de noche." },
-  { id: 7, name: "Shampoo de avena", cat: "Higiene", price: 28000, emoji: "🧴", desc: "Piel sensible." },
-  { id: 8, name: "Cepillo suave", cat: "Higiene", price: 21000, emoji: "🪮", desc: "Sin enredos ni tirones." },
+  { id: 1, name: "Croquetas Dog Chow", cat: "Alimento", price: 23550, image: "/productos/croquetas_perro.jpg", desc: "Proteína real, sin colorantes." },
+  { id: 2, name: "Snacks de zanahoria", cat: "Alimento", price: 18000, image: "/productos/zanahoria.jpg", desc: "Crujientes y horneados." },
+  { id: 3, name: "Pelota interactiva para gatos", cat: "Juguetes", price: 16200, image: "/productos/pelota_interactiva.jpg", desc: "Brilla en la oscuridad." },
+  { id: 4, name: "Ratón de catnip", cat: "Juguetes", price: 12000, image: "/productos/raton.jpg", desc: "Para gatos cazadores." },
+  { id: 5, featured: true, name: "Cama nido", cat: "Descanso", price: 135000, image: "/productos/cama_nido.jpg", desc: "Felpa suave, lavable." },
+  { id: 6, name: "Collar reflectivo", cat: "Paseo", price: 32000, image: "/productos/collar.jpg", desc: "Visible de noche." },
+  { id: 7, name: "Shampoo de avena", cat: "Higiene", price: 28000, image: "/productos/shampoo.jpg", desc: "Piel sensible." },
+  { id: 8, name: "Cepillo suave", cat: "Higiene", price: 21000, image: "/productos/cepillo_suave.jpg", desc: "Sin enredos ni tirones." },
 ];
+export const FREE_SHIPPING = 150000;
 export const SERVICES = ["Consulta", "Vacunación", "Baño y corte", "Desparasitación"];
 export const SLOTS = ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00", "17:00"];
 export const money = (n: number) => new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n);
