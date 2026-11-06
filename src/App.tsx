@@ -1,39 +1,39 @@
+import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
+import { StoreProvider } from "@/lib/store";
+import { AuthModal } from "@/components/sections/Auth";
+import { CartDrawer } from "@/components/sections/Catalog";
 import { ScrollBar } from "@/components/animations/ScrollBar";
 import { Mascot } from "@/components/animations/Mascot";
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
+import Home from "@/pages/Home";
+import Shop from "@/pages/Shop";
 
-import { Hero } from "@/components/sections/Hero";
-import { Marquee } from "@/components/sections/Marquee";
-import { About } from "@/components/sections/About";
-import { Stats } from "@/components/sections/Stats";
-import { Services } from "@/components/sections/Services";
-import { Visit } from "@/components/sections/Visit";
-import { Reviews } from "@/components/sections/Reviews";
-import { Booking } from "@/components/sections/Booking";
-import { AuthModal } from "./components/sections/Auth";
-import { CartDrawer, Catalog } from "./components/sections/Catalog";
+function Pages() {
+  const { pathname } = useLocation();
+  return (
+    <div key={pathname} className="enter">
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/tienda" element={<Shop />} />
+      </Routes>
+    </div>
+  );
+}
+
+function FloatingMascot() {
+  const { pathname } = useLocation();
+  return pathname === "/" ? <Mascot /> : null;
+}
 
 export default function App() {
   return (
-    <div className="min-h-screen overflow-x-hidden">
-      <ScrollBar />
-      <Navbar />
-      <main>
-        <Hero />
-        <Marquee />
-        <About />
-        <Stats />
-        <Services />
-         <Catalog />
-        <Visit />
-        <Reviews />
-        <Booking />
-      </main>
-      <Footer />
-      <AuthModal />   
-      <CartDrawer /> 
-      <Mascot />
-    </div>
+    <StoreProvider>
+      <BrowserRouter>
+        <ScrollBar />
+        <Pages />
+        <FloatingMascot />
+        <AuthModal />
+        <CartDrawer />
+      </BrowserRouter>
+    </StoreProvider>
   );
 }

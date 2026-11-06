@@ -3,13 +3,13 @@ import { LogOut, PawPrint, ShoppingBag, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useStore } from "@/lib/store.tsx";
+import { useStore } from "@/lib/store";
 
 /** Barra flotante: cuenta + carrito. Colócala una vez en App. */
-export function AccountBar() {
+export function AccountBar({ className = "" }: { className?: string }) {
   const { user, logout, setAuthOpen, setCartOpen, count } = useStore();
   return (
-    <div className="fixed top-4 right-4 z-40 flex items-center gap-2 rounded-full border bg-card/80 p-1.5 backdrop-blur-md enter">
+    <div className={`flex items-center gap-2 rounded-full border bg-card/80 p-1.5 backdrop-blur-md ${className}`}>
       {user ? (
         <>
           <span className="px-3 text-sm">Hola, <span className="font-display italic text-primary">{user.name.split(" ")[0]}</span></span>
