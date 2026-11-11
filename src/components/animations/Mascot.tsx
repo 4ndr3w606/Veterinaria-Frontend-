@@ -1,9 +1,14 @@
 import { useEffect, useRef, useState } from "react";
+import { ChatPanel } from "@/components/chat/ChatPanel";
+import { useStore } from "@/lib/store";
 
+/** Luma: la mascota y, al hacer clic, el chatbot de la web. */
 export function Mascot() {
   const ref = useRef<HTMLDivElement>(null);
+  const { userKey } = useStore();
   const [say, setSay] = useState<string | null>(null);
   const [hop, setHop] = useState(false);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     // Escucha el movimiento del cursor para mover las pupilas de Luma
@@ -23,8 +28,8 @@ export function Mascot() {
     window.addEventListener("pointermove", handlePointerMove);
 
     // Saludo inicial automático
-    const timerA = window.setTimeout(() => setSay("¡Hola! Soy Luma"), 2400);
-    const timerB = window.setTimeout(() => setSay(null), 6000);
+    const timerA = window.setTimeout(() => setSay("¡Hola! Soy Luma. ¿Te ayudo?"), 2400);
+    const timerB = window.setTimeout(() => setSay(null), 7000);
 
     return () => {
       window.removeEventListener("pointermove", handlePointerMove);
@@ -33,24 +38,26 @@ export function Mascot() {
     };
   }, []);
 
-  // Función al hacer clic en la mascota
-  const bark = () => {
-    setSay("¡Guau!");
+  // Al hacer clic: salta y abre o cierra el chat
+  const toggle = () => {
     setHop(true);
     window.setTimeout(() => setHop(false), 650);
-    window.setTimeout(() => setSay(null), 1500);
+    setOpen((o) => !o);
   };
 
   return (
     <div ref={ref} className="fixed bottom-2 left-3 z-40">
-      {say && (
+      {open && <ChatPanel key={userKey} onClose={() => setOpen(false)} />}
+      {say && !open && (
         <span className="bubble absolute -top-8 left-14 whitespace-nowrap rounded-full bg-primary px-3 py-1 text-sm font-bold text-primary-foreground">
           {say}
         </span>
       )}
       <button
-        onClick={bark}
-        aria-label="Saludar a Luma"
+        onClick={toggle}
+        aria-label={open ? "Cerrar chat con Luma" : "Abrir chat con Luma"}
+        aria-expanded={open}
+        aria-controls="luma-chat"
         className={`luma block ${hop ? "hop" : ""}`}
       >
         <svg viewBox="0 0 130 120" className="size-24 drop-shadow-xl sm:size-28">

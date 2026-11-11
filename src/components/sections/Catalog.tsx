@@ -1,147 +1,149 @@
 import { useMemo, useState } from "react";
-import { Check, Minus, Plus, Search, ShoppingBag, Truck, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Heart, SearchX, TriangleAlert } from "lucide-react";
 import { Reveal } from "@/components/animations/Reveal";
-import { FREE_SHIPPING, PRODUCTS, glow, money, useStore, type Product } from "@/lib/store";
+import { AddButton, HeartButton } from "@/components/shop/Buttons";
+import { FilterBar, type SortKey } from "@/components/shop/FilterBar";
+import { matchesPet, petLabel, type PetFilter } from "@/components/shop/helpers";
+import { ProductCard } from "@/components/shop/ProductCard";
+import { Pic } from "@/components/shop/ProductImage";
+import { QuickView } from "@/components/shop/QuickView";
+import { glow, money, useStore } from "@/lib/store";
+import type { Product } from "@/lib/types";
 
-const d = (i: number) => ({ "--i": i }) as React.CSSProperties;
-const CATS = ["Todo", ...Array.from(new Set(PRODUCTS.map((p) => p.cat)))];
-const norm = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-const SORTS = { rec: "Destacados", asc: "Precio: menor a mayor", desc: "Precio: mayor a menor", az: "Nombre A–Z" } as const;
-const ORDER: Record<keyof typeof SORTS, (a: Product, b: Product) => number> = {
-  rec: () => 0, asc: (a, b) => a.price - b.price, desc: (a, b) => b.price - a.price, az: (a, b) => a.name.localeCompare(b.name),
+const norm = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+
+const ORDER: Record<SortKey, (a: Product, b: Product) => number> = {
+  rec: () => 0,
+  asc: (a, b) => a.price - b.price,
+  desc: (a, b) => b.price - a.price,
+  az: (a, b) => a.name.localeCompare(b.name, "es"),
 };
 
-/** Imagen del producto. Si falta el archivo, muestra un panel tonal con la inicial (nunca una imagen rota). */
-export function Pic({ p, className = "" }: { p: Product; className?: string }) {
-  const [bad, setBad] = useState(false);
-  if (bad || !p.image)
-    return <div className={`flex items-center justify-center bg-muted ${className}`}><span className="font-display text-7xl text-primary/60 italic">{p.name[0]}</span></div>;
-  return <img src={p.image} alt={p.name} loading="lazy" decoding="async" onError={() => setBad(true)} className={`object-cover ${className}`} />;
-}
-
-function AddBtn({ p, className = "", size }: { p: Product; className?: string; size?: "lg" }) {
-  const { add } = useStore();
-  const [ok, setOk] = useState(false);
+/** Tarjetas "fantasma" mientras llega el catálogo desde la API. */
+function SkeletonGrid() {
   return (
-    <Button size={size} className={`rounded-full ${className}`} onClick={() => { add(p.id); setOk(true); setTimeout(() => setOk(false), 1100); }}>
-      {ok ? <><Check className="bubble" /> Añadido</> : <><Plus /> Añadir</>}
-    </Button>
+    <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true" aria-label="Cargando productos">
+      {Array.from({ length: 6 }, (_, i) => (
+        <div key={i} className="overflow-hidden rounded-3xl bg-card ring-1 ring-border">
+          <div className="shop-skeleton aspect-[4/5] w-full" />
+          <div className="space-y-3 p-5">
+            <div className="shop-skeleton h-3 w-1/3 rounded-full" />
+            <div className="shop-skeleton h-5 w-3/4 rounded-full" />
+            <div className="shop-skeleton h-10 w-full rounded-full" />
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 
 export function Catalog() {
+  const { products, loading, apiError, wishes } = useStore();
+  const [pet, setPet] = useState<PetFilter>("Todos");
   const [cat, setCat] = useState("Todo");
   const [q, setQ] = useState("");
-  const [sort, setSort] = useState<keyof typeof SORTS>("rec");
-  const feat = PRODUCTS.find((p) => p.featured);
-  const showFeat = !!feat && cat === "Todo" && !q;
+  const [sort, setSort] = useState<SortKey>("rec");
+  const [onlyWish, setOnlyWish] = useState(false);
+  const [quick, setQuick] = useState<Product | null>(null);
+  const [spot, setSpot] = useState(false);
+
+  // Las categorías cuentan solo los productos de la mascota elegida.
+  const cats = useMemo(() => {
+    const forPet = products.filter((p) => matchesPet(p, pet));
+    const names = Array.from(new Set(products.map((p) => p.cat)));
+    return [{ name: "Todo", count: forPet.length }, ...names.map((name) => ({ name, count: forPet.filter((p) => p.cat === name).length }))];
+  }, [products, pet]);
+
+  const feat = products.find((p) => p.featured);
+  const showFeat = !!feat && cat === "Todo" && !q && pet === "Todos" && !onlyWish;
+
   const list = useMemo(
-    () => PRODUCTS.filter((p) => (cat === "Todo" || p.cat === cat) && norm(`${p.name} ${p.desc}`).includes(norm(q)) && !(showFeat && p === feat)).sort(ORDER[sort]),
-    [cat, q, sort, showFeat, feat],
+    () =>
+      products
+        .filter((p) => matchesPet(p, pet) && (cat === "Todo" || p.cat === cat) && (!onlyWish || wishes.includes(p.id)) && norm(`${p.name} ${p.desc} ${p.cat}`).includes(norm(q)) && !(showFeat && p === feat))
+        .sort(ORDER[sort]),
+    [products, pet, cat, q, sort, onlyWish, wishes, showFeat, feat],
   );
+  // El destacado se muestra arriba (fuera de la cuadrícula), pero cuenta como producto.
+  const shown = list.length + (showFeat ? 1 : 0);
 
   return (
     <section id="catalogo" className="mx-auto max-w-6xl px-5 py-24">
       <Reveal><h2 className="text-5xl font-light tracking-tight md:text-7xl">Todo para <em className="text-primary">ellos.</em></h2></Reveal>
 
-      <div className="mt-10 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-wrap gap-2">
-          {CATS.map((c) => (
-            <button key={c} onClick={() => setCat(c)} className={`rounded-full px-5 py-2 text-sm transition-all duration-300 ${cat === c ? "scale-105 bg-primary text-primary-foreground" : "bg-card hover:text-primary"}`}>
-              {c} <span className="opacity-60">{c === "Todo" ? PRODUCTS.length : PRODUCTS.filter((p) => p.cat === c).length}</span>
-            </button>
-          ))}
-        </div>
-        <div className="flex gap-2">
-          <div className="relative flex-1 lg:w-64">
-            <Search className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar producto" aria-label="Buscar producto" className="h-12 rounded-full bg-card pl-11" />
-          </div>
-          <select value={sort} onChange={(e) => setSort(e.target.value as keyof typeof SORTS)} aria-label="Ordenar" className="h-12 rounded-full border bg-card px-4 text-sm">
-            {Object.entries(SORTS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-          </select>
-        </div>
-      </div>
+      <FilterBar
+        pet={pet} setPet={setPet} cats={cats} cat={cat} setCat={setCat} q={q} setQ={setQ}
+        sort={sort} setSort={setSort} onlyWish={onlyWish} setOnlyWish={setOnlyWish} wishCount={wishes.length}
+      />
 
-      {showFeat && feat && (
-        <Reveal className="mt-8">
-          <div className="grid items-center gap-8 rounded-[2rem] bg-secondary p-5 md:grid-cols-2 md:p-8">
-            <div className="glow-card overflow-hidden rounded-3xl" onMouseMove={glow}>
-              <Pic p={feat} className="aspect-[5/4] w-full transition-transform duration-700 hover:scale-105" />
-            </div>
-            <div className="md:pr-6">
-              <p className="text-sm text-accent">Favorito de la casa</p>
-              <h3 className="mt-3 text-5xl leading-none font-light md:text-6xl">{feat.name}</h3>
-              <p className="mt-4 max-w-sm leading-8 text-secondary-foreground">{feat.desc}</p>
-              <p className="mt-6 font-display text-3xl text-primary">{money(feat.price)}</p>
-              <AddBtn p={feat} size="lg" className="mt-6" />
-            </div>
-          </div>
-        </Reveal>
+      {apiError && (
+        <p role="status" className="shop-pop mt-6 flex items-center gap-2 rounded-2xl bg-muted px-4 py-3 text-sm">
+          <TriangleAlert className="size-4 shrink-0 text-accent" /> {apiError}
+        </p>
       )}
 
-      <p key={list.length + cat + q} className="bubble mt-8 text-sm text-muted-foreground">{list.length} {list.length === 1 ? "producto" : "productos"}</p>
-      <div key={cat + q + sort} className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {list.map((p, i) => (
-          <article key={p.id} className="group enter overflow-hidden rounded-3xl bg-card" style={d(i)}>
-            <div className="glow-card relative" onMouseMove={glow}>
-              <Pic p={p} className="aspect-[4/5] w-full transition-transform duration-700 group-hover:scale-105" />
-              <div className="absolute inset-x-3 bottom-3 transition-all duration-300 md:translate-y-4 md:opacity-0 md:group-focus-within:translate-y-0 md:group-focus-within:opacity-100 md:group-hover:translate-y-0 md:group-hover:opacity-100">
-                <AddBtn p={p} className="w-full" />
+      {loading ? <SkeletonGrid /> : (
+        <>
+          {showFeat && feat && (
+            <Reveal className="mt-8">
+              <div className="shop-spot grid items-center gap-8 rounded-[2rem] bg-secondary p-5 md:grid-cols-2 md:p-8">
+                <div className="relative mx-auto w-full max-w-sm">
+                  <span className="shop-aura" aria-hidden="true" />
+                  <div
+                    className="glow-card shop-shine relative overflow-hidden rounded-3xl"
+                    onMouseMove={glow}
+                    onPointerEnter={(e) => { if (e.pointerType !== "touch") setSpot(true); }}
+                    onPointerLeave={() => setSpot(false)}
+                  >
+                    <button type="button" onClick={() => setQuick(feat)} aria-label={`Ver detalles de ${feat.name}`} className="block w-full cursor-zoom-in">
+                      <Pic p={feat} play={spot} className="aspect-[4/5] w-full" />
+                    </button>
+                  </div>
+                  <span className="shop-sticker absolute -top-3 -right-3 flex size-20 items-center justify-center rounded-full bg-accent p-2 text-center text-xs leading-tight font-bold text-accent-foreground">
+                    Favorito de la casa
+                  </span>
+                </div>
+                <div className="md:pr-6">
+                  <p className="text-sm text-accent">{feat.cat} · {petLabel(feat)}</p>
+                  <h3 className="mt-3 text-5xl leading-none font-light md:text-6xl">{feat.name}</h3>
+                  <p className="mt-4 max-w-sm leading-8 text-secondary-foreground">{feat.desc}</p>
+                  <p className="mt-6 font-display text-3xl text-primary">{money(feat.price)}</p>
+                  <div className="mt-6 flex items-center gap-3">
+                    <AddButton p={feat} size="lg" />
+                    <HeartButton id={feat.id} className="size-12 border" />
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="flex items-start justify-between gap-3 p-5">
-              <div><p className="text-xs text-muted-foreground">{p.cat}</p><h3 className="text-xl leading-tight">{p.name}</h3></div>
-              <span className="font-display text-lg whitespace-nowrap text-accent">{money(p.price)}</span>
-            </div>
-          </article>
-        ))}
-      </div>
-      {list.length === 0 && !showFeat && <p className="bubble py-20 text-center text-muted-foreground">Nada coincide con «{q}». Prueba con otra palabra.</p>}
-    </section>
-  );
-}
+            </Reveal>
+          )}
 
-export function CartDrawer() {
-  const { cartOpen, setCartOpen, cart, setQty, total, count, checkout } = useStore();
-  const [done, setDone] = useState(false);
-  const items = PRODUCTS.filter((p) => cart[p.id]);
-  const pct = Math.min(100, (total / FREE_SHIPPING) * 100);
-  return (
-    <>
-      <div className={`fixed inset-0 z-[55] bg-background/70 backdrop-blur-sm transition-opacity duration-500 ${cartOpen ? "opacity-100" : "pointer-events-none opacity-0"}`} onClick={() => setCartOpen(false)} />
-      <aside className={`fixed top-0 right-0 z-[60] flex h-full w-full max-w-md flex-col bg-card p-6 transition-transform duration-700 [transition-timing-function:cubic-bezier(0.2,0.75,0.25,1)] ${cartOpen ? "translate-x-0" : "translate-x-full"}`}>
-        <div className="flex items-center justify-between"><h3 className="text-3xl font-light">Tu cesta</h3><button onClick={() => setCartOpen(false)} aria-label="Cerrar"><X /></button></div>
-        {!done && count > 0 && (
-          <div className="mt-5 rounded-2xl bg-muted p-4 text-sm">
-            <p className="flex items-center gap-2"><Truck className="size-4 text-primary" />{pct >= 100 ? "¡Envío gratis desbloqueado!" : `Te faltan ${money(FREE_SHIPPING - total)} para el envío gratis`}</p>
-            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-background"><div className="h-full rounded-full bg-primary transition-[width] duration-700" style={{ width: `${pct}%` }} /></div>
+          <p key={`${shown}-${cat}-${pet}-${q}`} className="shop-pop mt-8 text-sm text-muted-foreground" aria-live="polite">
+            {shown} {shown === 1 ? "producto" : "productos"}
+          </p>
+
+          <div key={`${cat}|${pet}|${q}|${sort}|${onlyWish}`} className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {list.map((p, i) => <ProductCard key={p.id} p={p} index={i} onQuick={setQuick} />)}
           </div>
-        )}
-        <div className="mt-5 flex-1 space-y-3 overflow-y-auto">
-          {done && <div className="bubble py-16 text-center"><span className="beat inline-block text-5xl">💚</span><p className="mt-4 font-display text-2xl">¡Pedido recibido!</p><p className="text-sm text-muted-foreground">Demostración: no se cobró nada.</p></div>}
-          {!done && items.length === 0 && <p className="py-16 text-center text-muted-foreground">Tu cesta está vacía. Añade algo para tu peludo.</p>}
-          {!done && items.map((p) => (
-            <div key={p.id} className="bubble flex items-center gap-3 rounded-2xl bg-muted p-3">
-              <Pic p={p} className="size-16 rounded-xl" />
-              <div className="flex-1"><p className="text-sm">{p.name}</p><p className="text-xs text-accent">{money(p.price * cart[p.id])}</p></div>
-              <div className="flex items-center gap-1">
-                <Button size="icon" variant="ghost" className="size-7 rounded-full" aria-label="Quitar uno" onClick={() => setQty(p.id, cart[p.id] - 1)}><Minus /></Button>
-                <span className="w-5 text-center text-sm">{cart[p.id]}</span>
-                <Button size="icon" variant="ghost" className="size-7 rounded-full" aria-label="Añadir uno" onClick={() => setQty(p.id, cart[p.id] + 1)}><Plus /></Button>
-              </div>
+
+          {shown === 0 && (
+            <div className="shop-pop py-20 text-center text-muted-foreground">
+              {onlyWish && wishes.length === 0 ? (
+                <>
+                  <Heart className="shop-wobble mx-auto size-12 text-accent" />
+                  <p className="mt-4">Aún no tienes favoritos. Toca el corazón de un producto para guardarlo aquí.</p>
+                </>
+              ) : (
+                <>
+                  <SearchX className="shop-wobble mx-auto size-12 text-primary" />
+                  <p className="mt-4">{q ? `Nada coincide con «${q}». Prueba con otra palabra.` : "No hay productos con esos filtros."}</p>
+                </>
+              )}
             </div>
-          ))}
-        </div>
-        {!done && count > 0 && (
-          <div className="pt-4">
-            <div className="mb-4 flex justify-between"><span>Total</span><span key={total} className="bubble font-display text-2xl text-primary">{money(total)}</span></div>
-            <Button size="lg" className="w-full rounded-full" onClick={() => { checkout(); setDone(true); setTimeout(() => { setDone(false); setCartOpen(false); }, 2200); }}><ShoppingBag /> Finalizar pedido</Button>
-          </div>
-        )}
-      </aside>
-    </>
+          )}
+        </>
+      )}
+
+      <QuickView p={quick} onClose={() => setQuick(null)} />
+    </section>
   );
 }

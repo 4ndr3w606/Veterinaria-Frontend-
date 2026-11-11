@@ -1,7 +1,7 @@
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import { StoreProvider } from "@/lib/store";
 import { AuthModal } from "@/components/sections/Auth";
-import { CartDrawer } from "@/components/sections/Catalog";
+import { CartDrawer } from "@/components/sections/CartDrawer";
 import { ScrollBar } from "@/components/animations/ScrollBar";
 import { Mascot } from "@/components/animations/Mascot";
 import Home from "@/pages/Home";
@@ -19,18 +19,14 @@ function Pages() {
   );
 }
 
-function FloatingMascot() {
-  const { pathname } = useLocation();
-  return pathname === "/" ? <Mascot /> : null;
-}
-
 export default function App() {
   return (
     <StoreProvider>
       <BrowserRouter>
         <ScrollBar />
         <Pages />
-        <FloatingMascot />
+        {/* Luma (el chatbot) está disponible en todas las páginas */}
+        <Mascot />
         <AuthModal />
         <CartDrawer />
       </BrowserRouter>

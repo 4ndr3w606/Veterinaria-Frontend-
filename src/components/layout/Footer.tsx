@@ -28,7 +28,7 @@ export function Footer() {
         </div>
 
         <div>
-          <Button variant="outline" className="rounded-full" onClick={() => go("inicio")}>
+          <Button variant="outline" className="rounded-full" onClick={() => (document.getElementById("inicio") ? go("inicio") : window.scrollTo({ top: 0, behavior: "smooth" }))}>
             Volver al inicio <ArrowUpRight />
           </Button>
         </div>

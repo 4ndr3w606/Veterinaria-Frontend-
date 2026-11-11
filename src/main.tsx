@@ -4,14 +4,12 @@ import { createRoot } from "react-dom/client"
 import "./index.css"
 import App from "./App.tsx"
 import { ThemeProvider } from "@/components/theme-provider.tsx"
-import { StoreProvider } from "@/lib/store.tsx"
 
+// El StoreProvider vive dentro de <App /> (junto al Router); no debe duplicarse aquí.
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeProvider>
-      <StoreProvider>
-        <App />
-      </StoreProvider>
+      <App />
     </ThemeProvider>
   </StrictMode>
 )

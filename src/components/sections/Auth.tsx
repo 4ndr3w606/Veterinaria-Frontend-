@@ -18,7 +18,7 @@ export function AccountBar({ className = "" }: { className?: string }) {
       ) : (
         <Button size="sm" className="rounded-full" onClick={() => setAuthOpen(true)}><PawPrint /> Entrar</Button>
       )}
-      <Button size="icon" variant="secondary" className="relative rounded-full" onClick={() => setCartOpen(true)} aria-label="Carrito">
+      <Button size="icon" variant="secondary" className="relative rounded-full" onClick={() => setCartOpen(true)} aria-label="Carrito" data-cart-target>
         <ShoppingBag />
         {count > 0 && <span key={count} className="bubble absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-accent text-[11px] font-bold text-accent-foreground">{count}</span>}
       </Button>

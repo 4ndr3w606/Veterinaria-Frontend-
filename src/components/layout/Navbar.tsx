@@ -119,6 +119,7 @@ export function Navbar() {
     size="icon"
     title="Carrito"
     aria-label="Carrito"
+    data-cart-target
     className="relative size-12 rounded-full"
     onClick={() => setCartOpen(true)}
   >

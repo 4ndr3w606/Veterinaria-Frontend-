@@ -1,0 +1,18 @@
+[
+  { "id": 1, "name": "Croquetas Dog Chow", "cat": "Alimento", "pet": "Perro", "price": 23550, "image": "/productos/croquetas_perro.jpg", "gif": "/productos/gifs/croquetas_perro.gif", "desc": "Proteína real, sin colorantes." },
+  { "id": 2, "name": "Snacks de zanahoria", "cat": "Alimento", "pet": "Todos", "price": 18000, "image": "/productos/zanahoria.jpg", "desc": "Crujientes y horneados." },
+  { "id": 3, "name": "Pelota interactiva para gatos", "cat": "Juguetes", "pet": "Gato", "price": 16200, "image": "/productos/pelota_interactiva.jpg", "gif": "/productos/gifs/pelota_interactiva.gif", "desc": "Brilla en la oscuridad." },
+  { "id": 4, "name": "Ratón de catnip", "cat": "Juguetes", "pet": "Gato", "price": 12000, "image": "/productos/raton.jpg", "desc": "Para gatos cazadores." },
+  { "id": 5, "name": "Cama nido", "cat": "Descanso", "pet": "Todos", "price": 135000, "image": "/productos/cama_nido.jpg", "gif": "/productos/gifs/cama_nido.gif", "desc": "Felpa suave, lavable.", "featured": true },
+  { "id": 6, "name": "Collar reflectivo", "cat": "Paseo", "pet": "Perro", "price": 32000, "image": "/productos/collar.jpg", "desc": "Visible de noche." },
+  { "id": 7, "name": "Shampoo de avena", "cat": "Higiene", "pet": "Todos", "price": 28000, "image": "/productos/shampoo.jpg", "desc": "Piel sensible." },
+  { "id": 8, "name": "Cepillo suave", "cat": "Higiene", "pet": "Todos", "price": 21000, "image": "/productos/cepillo_suave.jpg", "gif": "/productos/gifs/cepillo_suave.gif", "desc": "Sin enredos ni tirones." },
+  { "id": 9, "name": "Croquetas para gato adulto", "cat": "Alimento", "pet": "Gato", "price": 28900, "image": "/productos/croquetas_gato.jpg", "desc": "Porciones pensadas para felinos.", "tag": "Nuevo" },
+  { "id": 10, "name": "Arnés ajustable", "cat": "Paseo", "pet": "Perro", "price": 45000, "image": "/productos/arnes.jpg", "desc": "Cómodo y seguro en cada paseo." },
+  { "id": 11, "name": "Rascador torre", "cat": "Juguetes", "pet": "Gato", "price": 98000, "image": "/productos/rascador.jpg", "desc": "Para trepar, afilar y descansar.", "tag": "Nuevo" },
+  { "id": 12, "name": "Fuente de agua", "cat": "Alimento", "pet": "Todos", "price": 79000, "image": "/productos/fuente.jpg", "desc": "Agua fresca en movimiento." },
+  { "id": 13, "name": "Pelota con sonido", "cat": "Juguetes", "pet": "Perro", "price": 14000, "image": "/productos/pelota_sonido.jpg", "desc": "Resistente y divertida." },
+  { "id": 14, "name": "Kit de higiene dental", "cat": "Salud", "pet": "Perro", "price": 29000, "image": "/productos/kit_dental.jpg", "desc": "Cepillo y pasta para el día a día." },
+  { "id": 15, "name": "Cuerda para morder", "cat": "Juguetes", "pet": "Perro", "price": 17000, "image": "/productos/cuerda.jpg", "desc": "Algodón trenzado, ideal para jugar." },
+  { "id": 16, "name": "Transportadora de viaje", "cat": "Paseo", "pet": "Todos", "price": 119000, "image": "/productos/transportadora.jpg", "desc": "Ventilada y fácil de limpiar.", "tag": "Nuevo" }
+]
