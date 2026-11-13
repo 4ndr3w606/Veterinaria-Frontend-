@@ -85,7 +85,8 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
     setInput("");
     setChips([]);
     setTyping(true);
-    const started = Date.now();
+    
+    const pause = new Promise((resolve) => setTimeout(resolve, 700));
 
     let reply: BotReply = botReply(text, {
       products, cart, total,
@@ -98,8 +99,7 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
       if (remote && typeof remote.text === "string") reply = remote;
     }
 
-    // Pausa corta para que se sienta natural.
-    await new Promise((resolve) => setTimeout(resolve, Math.max(0, 700 - (Date.now() - started))));
+        await pause;
     setTyping(false);
     setMsgs((m) => [...m, { id: crypto.randomUUID(), from: "bot", text: reply.text }]);
     setChips(reply.chips ?? DEFAULT_CHIPS);

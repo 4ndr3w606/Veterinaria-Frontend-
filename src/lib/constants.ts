@@ -16,3 +16,5 @@ export const CAT_EMOJI: Record<string, string> = {
 
 export const money = (n: number) =>
   new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n);
+
+export const EMERGENCY_TIME = "Atención Inmediata"

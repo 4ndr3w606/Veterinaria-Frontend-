@@ -1,9 +1,8 @@
 import { createContext, useContext, useEffect, useState, type ReactNode, type MouseEvent } from "react";
 import seed from "@/data/products.json";
 import { api } from "@/lib/api";
-import { FREE_SHIPPING, SERVICES, SLOTS, money } from "@/lib/constants";
 import type { Account, Booking, Cart, Product } from "@/lib/types";
-
+import { EMERGENCY_TIME, FREE_SHIPPING, SERVICES, SLOTS, money } from "@/lib/constants";
 export type { Booking, Product };
 export { FREE_SHIPPING, SERVICES, SLOTS, money };
 
@@ -122,10 +121,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }),
     book: (b) => {
       if (!user) return "Inicia sesión para reservar.";
-      if (bookings.some((x) => x.date === b.date && x.time === b.time)) return "Ese horario ya está ocupado.";
+      if (b.time !== EMERGENCY_TIME && bookings.some((x) => x.date === b.date && x.time === b.time)) return "Ese horario ya está ocupado.";
       setBookings([...bookings, { ...b, id: crypto.randomUUID(), email: user.email }]); return null;
     },
     cancel: (id) => setBookings((l) => l.filter((x) => x.id !== id)),
   };
   return <C.Provider value={value}>{children}</C.Provider>;
 }
+

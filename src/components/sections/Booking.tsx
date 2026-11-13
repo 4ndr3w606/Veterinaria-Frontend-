@@ -8,6 +8,7 @@ import { Magnetic } from "@/components/animations/Magnetic";
 import { Reveal } from "@/components/animations/Reveal";
 import { Faq } from "@/components/sections/Faq";
 import { SERVICES, SLOTS, useStore } from "@/lib/store.tsx";
+import { EMERGENCY_TIME } from "@/lib/constants";
 
 const chip = (on: boolean, off = false) =>
   `rounded-full border px-4 py-2 text-sm transition-all duration-300 ${
@@ -45,7 +46,6 @@ export function Booking() {
     setService(selectedService);
     if (selectedService === "Emergencia") {
       setDate(today);
-      setTime("Inmediata"); // Asigna hora de atención inmediata
     } else {
       setTime("");
     }
@@ -76,8 +76,7 @@ export function Booking() {
       service === "Emergencia"
         ? `Emergencia: ${emergencyReason.trim()}`
         : service;
-    const finalTime = service === "Emergencia" ? "Atención Inmediata" : time;
-
+    const finalTime = service === "Emergencia" ? EMERGENCY_TIME : time;
     const r = book({
       pet,
       species: finalSpecies,
