@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowUpRight, Check, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,9 +22,13 @@ const chip = (on: boolean, off = false) =>
 const ALL_SERVICES = [...SERVICES, "Emergencia"];
 
 export function Booking() {
-  const { user, setAuthOpen, bookings, book, cancel } = useStore();
+  const { user, setAuthOpen, bookings, bookingsLoading, bookingsError, book, cancel, getBookingAvailability } = useStore();
   const [sent, setSent] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [cancelErr, setCancelErr] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [availabilityLoading, setAvailabilityLoading] = useState(false);
+  const [unavailableSlots, setUnavailableSlots] = useState<string[]>([]);
   
   // El input date usa YYYY-MM-DD en hora local. toISOString() convierte a UTC
   // y puede avanzar el día en Colombia después de las 7 p. m.
@@ -43,11 +47,34 @@ export function Booking() {
   const [customSpecies, setCustomSpecies] = useState("");
   const [emergencyReason, setEmergencyReason] = useState("");
 
-  const mine = bookings
-    .filter((b) => b.email === user?.email)
-    .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
-    
-  const taken = (t: string) => bookings.some((b) => b.date === date && b.time === t);
+  const mine = [...bookings].sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+  const taken = (time: string) => unavailableSlots.includes(time);
+
+  useEffect(() => {
+    if (!date || service === "Emergencia") {
+      setUnavailableSlots([]);
+      setAvailabilityLoading(false);
+      return;
+    }
+    let active = true;
+    setAvailabilityLoading(true);
+    setErr(null);
+    getBookingAvailability(date)
+      .then((availability) => {
+        if (active) {
+          setUnavailableSlots(availability.unavailableSlots);
+          setTime((current) => availability.unavailableSlots.includes(current) ? "" : current);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setUnavailableSlots([]);
+          setErr("No se pudo consultar la disponibilidad. La reserva se validará al confirmar.");
+        }
+      })
+      .finally(() => { if (active) setAvailabilityLoading(false); });
+    return () => { active = false; };
+  }, [date, service, getBookingAvailability]);
 
   const handleServiceChange = (selectedService: string) => {
     setService(selectedService);
@@ -58,7 +85,7 @@ export function Booking() {
     }
   };
 
-  const submit = (e: React.FormEvent<HTMLFormElement>) => {
+  const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!user) return setAuthOpen(true);
     
@@ -79,19 +106,19 @@ export function Booking() {
     const pet = String(formData.get("pet"));
 
     const finalSpecies = species === "Otro" ? customSpecies.trim() : species;
-    const finalService =
-      service === "Emergencia"
-        ? `Emergencia: ${emergencyReason.trim()}`
-        : service;
+    const finalService = service;
     const finalTime = service === "Emergencia" ? EMERGENCY_TIME : time;
-    const r = book({
+    setSubmitting(true);
+    const r = await book({
       pet,
       species: finalSpecies,
       service: finalService,
+      ...(service === "Emergencia" ? { reason: emergencyReason.trim() } : {}),
       date: service === "Emergencia" ? today : date,
       time: finalTime,
     });
 
+    setSubmitting(false);
     setErr(r);
     if (!r) {
       setSent(pet);
@@ -248,7 +275,7 @@ export function Booking() {
                         <button
                           type="button"
                           key={t}
-                          disabled={taken(t)}
+                          disabled={taken(t) || availabilityLoading}
                           onClick={() => setTime(t)}
                           className={chip(time === t, taken(t))}
                         >
@@ -271,6 +298,7 @@ export function Booking() {
                   <Button
                     type="submit"
                     size="lg"
+                    disabled={submitting}
                     className={`w-full rounded-full ${
                       service === "Emergencia" ? "bg-destructive text-white hover:bg-destructive/90" : ""
                     }`}
@@ -287,35 +315,50 @@ export function Booking() {
             )}
 
             {/* Mis Citas */}
-            {mine.length > 0 && (
+            {user && (
               <div className="mt-8 border-t pt-6">
                 <h4 className="font-display text-xl">Mis citas</h4>
-                <ul className="mt-3 space-y-2">
-                  {mine.map((b) => (
-                    <li
-                      key={b.id}
-                      className="bubble flex items-center justify-between rounded-2xl bg-muted px-4 py-3 text-sm"
-                    >
-                      <span>
-                        <b className="font-medium text-primary">{b.pet}</b> ({b.species}) · {b.service}
-                        <br />
-                        <span className="text-muted-foreground">
-                          {b.date} — {b.time}
-                        </span>
-                      </span>
-                      <button
-                        onClick={() => cancel(b.id)}
-                        className="text-muted-foreground hover:text-destructive"
-                        aria-label="Cancelar cita"
-                      >
-                        <Trash2 className="size-4" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
+                {bookingsLoading ? (
+                  <p className="mt-3 text-sm text-muted-foreground">Cargando tus citas...</p>
+                ) : bookingsError ? (
+                  <p role="alert" className="mt-3 text-sm text-destructive">{bookingsError}</p>
+                ) : mine.length === 0 ? (
+                  <p className="mt-3 text-sm text-muted-foreground">Aún no tienes citas reservadas.</p>
+                ) : (
+                  <>
+                    {cancelErr && <p role="alert" className="mb-3 text-sm text-destructive">{cancelErr}</p>}
+                    <ul className="mt-3 space-y-2">
+                      {mine.map((b) => (
+                        <li
+                          key={b.id}
+                          className="bubble flex items-center justify-between rounded-2xl bg-muted px-4 py-3 text-sm"
+                        >
+                          <span>
+                            <b className="font-medium text-primary">{b.pet}</b> ({b.species}) · {b.service}
+                            {b.reason && <> · {b.reason}</>}
+                            <br />
+                            <span className="text-muted-foreground">
+                              {b.date} — {b.time}
+                            </span>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              setCancelErr(null);
+                              setCancelErr(await cancel(b.id));
+                            }}
+                            className="text-muted-foreground hover:text-destructive"
+                            aria-label="Cancelar cita"
+                          >
+                            <Trash2 className="size-4" />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
               </div>
-            )}
-          </CardContent>
+            )}          </CardContent>
         </Card>
       </Reveal>
     </section>

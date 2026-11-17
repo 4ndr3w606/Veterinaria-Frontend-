@@ -91,7 +91,7 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
     let reply: BotReply = botReply(text, {
       products, cart, total,
       userName: user?.name ?? null,
-      bookings: bookings.filter((b) => b.email === user?.email),
+      bookings,
     });
     // Con API configurada, lo que el bot local no entiende se le pregunta al servidor.
     if (reply.fallback && api.remote) {

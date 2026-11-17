@@ -1,9 +1,9 @@
-import { createContext, useContext, useEffect, useState, type ReactNode, type MouseEvent } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode, type MouseEvent } from "react";
 import seed from "@/data/products.json";
-import { api } from "@/lib/api";
+import { ApiError, api } from "@/lib/api";
 import { getLocalStorageItem, removeLocalStorageItem, setLocalStorageItem } from "@/lib/safeStorage";
-import type { Account, Booking, Cart, Product, User } from "@/lib/types";
-import { EMERGENCY_TIME, FREE_SHIPPING, SERVICES, SLOTS, money } from "@/lib/constants";
+import type { Account, Booking, BookingAvailability, BookingInput, Cart, Product, User } from "@/lib/types";
+import { FREE_SHIPPING, SERVICES, SLOTS, money } from "@/lib/constants";
 export type { Booking, Product };
 export { FREE_SHIPPING, SERVICES, SLOTS, money };
 
@@ -29,14 +29,16 @@ type Ctx = {
   /** Identificador de quien usa la web: el correo de la cuenta o "guest". */
   userKey: string;
   products: Product[]; loading: boolean; apiError: string | null;
-  cart: Cart; count: number; total: number; bookings: Booking[]; wishes: number[];
+  cart: Cart; count: number; total: number; bookings: Booking[]; bookingsLoading: boolean; bookingsError: string | null; wishes: number[];
   authOpen: boolean; cartOpen: boolean; setAuthOpen: (v: boolean) => void; setCartOpen: (v: boolean) => void;
   login: (email: string, pass: string) => string | null; register: (name: string, email: string, pass: string) => string | null; logout: () => void;
   add: (id: number, qty?: number) => void; setQty: (id: number, q: number) => void;
   /** Devuelve un mensaje de error, o null si el pedido se registró. */
   checkout: () => Promise<string | null>;
   toggleWish: (id: number) => void;
-  book: (b: Omit<Booking, "id" | "email">) => string | null; cancel: (id: string) => void;
+  getBookingAvailability: (date: string) => Promise<BookingAvailability>;
+  book: (booking: BookingInput) => Promise<string | null>;
+  cancel: (id: string) => Promise<string | null>;
 };
 const C = createContext<Ctx>(null!);
 export const useStore = () => useContext(C);
@@ -48,7 +50,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   // Un carrito (y una lista de favoritos) POR CUENTA, más uno aparte para invitados.
   const [carts, setCarts] = useState<Record<string, Cart>>(() => read<Record<string, Cart>>("lumina:carts", {}));
   const [allWishes, setAllWishes] = useState<Record<string, number[]>>(() => read<Record<string, number[]>>("lumina:wishes", {}));
-  const [bookings, setBookings] = useState<Booking[]>(() => read("lumina:bookings", []));
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bookingsLoading, setBookingsLoading] = useState(false);
+  const [bookingsError, setBookingsError] = useState<string | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [products, setProducts] = useState<Product[]>(api.remote ? [] : PRODUCTS);
@@ -62,9 +66,31 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, []);
   useEffect(() => { setLocalStorageItem("lumina:carts", JSON.stringify(carts)); }, [carts]);
   useEffect(() => { setLocalStorageItem("lumina:wishes", JSON.stringify(allWishes)); }, [allWishes]);
-  useEffect(() => { setLocalStorageItem("lumina:bookings", JSON.stringify(bookings)); }, [bookings]);
+
 
   // El carrito de versiones anteriores era uno solo para todos: se descarta para que no se "filtre" a otras cuentas.
+  useEffect(() => {
+    let off = false;
+    setBookings([]);
+    setBookingsError(null);
+    if (!user) {
+      setBookingsLoading(false);
+      return;
+    }
+
+    setBookingsLoading(true);
+    api.getBookings(user.email)
+      .then((list) => { if (!off) setBookings(list); })
+      .catch((error: unknown) => {
+        if (!off) {
+          setBookings([]);
+          setBookingsError(error instanceof ApiError ? error.message : "No se pudieron cargar tus citas.");
+        }
+      })
+      .finally(() => { if (!off) setBookingsLoading(false); });
+    return () => { off = true; };
+  }, [user?.email]);
+
   useEffect(() => { removeLocalStorageItem("lumina:cart"); }, []);
 
   // Catálogo desde la API (solo si VITE_API_URL está configurado).
@@ -83,11 +109,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const wishes: number[] = allWishes[userKey] ?? NO_WISHES;
   const updateCart = (fn: (c: Cart) => Cart) => setCarts((all) => ({ ...all, [userKey]: fn(all[userKey] ?? {}) }));
 
+  const getBookingAvailability = useCallback((date: string) => api.getBookingAvailability(date), []);
   const count = Object.values(cart).reduce((a, b) => a + b, 0);
   const total = products.reduce((s, p) => s + p.price * (cart[p.id] ?? 0), 0);
 
   const value: Ctx = {
-    user, userKey, products, loading, apiError, cart, count, total, bookings, wishes, authOpen, cartOpen, setAuthOpen, setCartOpen,
+    user, userKey, products, loading, apiError, cart, count, total, bookings, bookingsLoading, bookingsError, wishes, authOpen, cartOpen, setAuthOpen, setCartOpen,
     // DEMO: cuentas válidas solo mientras esta página está abierta; la autenticación real va en el backend.
     // El correo se compara sin mayúsculas ni espacios: "Ana@x.com" y "ana@x.com" son la misma cuenta (y el mismo carrito).
     register: (name, email, pass) => {
@@ -126,12 +153,32 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const cur = all[userKey] ?? [];
       return { ...all, [userKey]: cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id] };
     }),
-    book: (b) => {
+    getBookingAvailability,
+    book: async (booking) => {
       if (!user) return "Inicia sesión para reservar.";
-      if (b.time !== EMERGENCY_TIME && bookings.some((x) => x.date === b.date && x.time === b.time)) return "Ese horario ya está ocupado.";
-      setBookings((current) => [...current, { ...b, id: crypto.randomUUID(), email: user.email }]); return null;
+      try {
+        const created = await api.createBooking(booking, user.email);
+        setBookings((current) => [...current, created]);
+        return null;
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 409) return "Ese horario ya está ocupado.";
+        if (error instanceof ApiError && error.status === 401) return "Tu sesión no está autorizada para reservar.";
+        if (error instanceof ApiError && error.status === 422) return error.message;
+        return "No pudimos registrar la cita. Inténtalo de nuevo."; 
+      }
     },
-    cancel: (id) => setBookings((l) => l.filter((x) => x.id !== id)),
+    cancel: async (id) => {
+      if (!user) return "Inicia sesión para cancelar."; 
+      try {
+        await api.cancelBooking(id, user.email);
+        setBookings((current) => current.filter((booking) => booking.id !== id));
+        return null;
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 404) return "No encontramos esa cita.";
+        if (error instanceof ApiError && error.status === 401) return "Tu sesión no está autorizada para cancelar citas.";
+        return "No pudimos cancelar la cita. Inténtalo de nuevo."; 
+      }
+    },
   };
   return <C.Provider value={value}>{children}</C.Provider>;
 }

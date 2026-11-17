@@ -16,7 +16,9 @@ export type Product = {
   tag?: string;
 };
 
-export type Booking = { id: string; email: string; pet: string; species: string; service: string; date: string; time: string };
+export type BookingInput = { pet: string; species: string; service: string; date: string; time: string; reason?: string };
+export type Booking = BookingInput & { id: string; email?: string };
+export type BookingAvailability = { date: string; unavailableSlots: string[] };
 export type Account = { name: string; email: string; pass: string };
 export type User = Pick<Account, "name" | "email">;
 
