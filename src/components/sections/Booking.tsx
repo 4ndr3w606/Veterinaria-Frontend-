@@ -26,7 +26,14 @@ export function Booking() {
   const [sent, setSent] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   
-  const today = new Date().toISOString().split("T")[0];
+  // El input date usa YYYY-MM-DD en hora local. toISOString() convierte a UTC
+  // y puede avanzar el día en Colombia después de las 7 p. m.
+  const now = new Date();
+  const today = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0"),
+  ].join("-");
 
   const [service, setService] = useState(ALL_SERVICES[0]);
   const [date, setDate] = useState("");
