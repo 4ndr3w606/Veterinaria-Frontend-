@@ -18,6 +18,7 @@ export type Product = {
 
 export type Booking = { id: string; email: string; pet: string; species: string; service: string; date: string; time: string };
 export type Account = { name: string; email: string; pass: string };
+export type User = Pick<Account, "name" | "email">;
 
 /** Carrito: id de producto -> cantidad. */
 export type Cart = Record<number, number>;

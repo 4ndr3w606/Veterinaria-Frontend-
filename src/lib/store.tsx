@@ -1,7 +1,8 @@
 import { createContext, useContext, useEffect, useState, type ReactNode, type MouseEvent } from "react";
 import seed from "@/data/products.json";
 import { api } from "@/lib/api";
-import type { Account, Booking, Cart, Product } from "@/lib/types";
+import { getLocalStorageItem, removeLocalStorageItem, setLocalStorageItem } from "@/lib/safeStorage";
+import type { Account, Booking, Cart, Product, User } from "@/lib/types";
 import { EMERGENCY_TIME, FREE_SHIPPING, SERVICES, SLOTS, money } from "@/lib/constants";
 export type { Booking, Product };
 export { FREE_SHIPPING, SERVICES, SLOTS, money };
@@ -21,10 +22,10 @@ export const glow = (e: MouseEvent<HTMLElement>) => {
   e.currentTarget.style.setProperty("--my", `${e.clientY - r.top}px`);
 };
 
-const read = <T,>(k: string, d: T): T => { try { return (JSON.parse(localStorage.getItem(k) ?? "") as T) ?? d; } catch { return d; } };
+const read = <T,>(k: string, d: T): T => { try { return (JSON.parse(getLocalStorageItem(k) ?? "") as T) ?? d; } catch { return d; } };
 
 type Ctx = {
-  user: Account | null;
+  user: User | null;
   /** Identificador de quien usa la web: el correo de la cuenta o "guest". */
   userKey: string;
   products: Product[]; loading: boolean; apiError: string | null;
@@ -41,8 +42,9 @@ const C = createContext<Ctx>(null!);
 export const useStore = () => useContext(C);
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [accounts, setAccounts] = useState<Account[]>(() => read("lumina:accounts", []));
-  const [user, setUser] = useState<Account | null>(() => read("lumina:user", null));
+  // La autenticación solo se simula en memoria; no se persisten cuentas ni contraseñas.
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [user, setUser] = useState<User | null>(null);
   // Un carrito (y una lista de favoritos) POR CUENTA, más uno aparte para invitados.
   const [carts, setCarts] = useState<Record<string, Cart>>(() => read<Record<string, Cart>>("lumina:carts", {}));
   const [allWishes, setAllWishes] = useState<Record<string, number[]>>(() => read<Record<string, number[]>>("lumina:wishes", {}));
@@ -53,14 +55,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(api.remote);
   const [apiError, setApiError] = useState<string | null>(null);
 
-  useEffect(() => { localStorage.setItem("lumina:accounts", JSON.stringify(accounts)); }, [accounts]);
-  useEffect(() => { localStorage.setItem("lumina:user", JSON.stringify(user)); }, [user]);
-  useEffect(() => { localStorage.setItem("lumina:carts", JSON.stringify(carts)); }, [carts]);
-  useEffect(() => { localStorage.setItem("lumina:wishes", JSON.stringify(allWishes)); }, [allWishes]);
-  useEffect(() => { localStorage.setItem("lumina:bookings", JSON.stringify(bookings)); }, [bookings]);
+  // Elimina credenciales en texto plano que versiones anteriores guardaron en el navegador.
+  useEffect(() => {
+    removeLocalStorageItem("lumina:accounts");
+    removeLocalStorageItem("lumina:user");
+  }, []);
+  useEffect(() => { setLocalStorageItem("lumina:carts", JSON.stringify(carts)); }, [carts]);
+  useEffect(() => { setLocalStorageItem("lumina:wishes", JSON.stringify(allWishes)); }, [allWishes]);
+  useEffect(() => { setLocalStorageItem("lumina:bookings", JSON.stringify(bookings)); }, [bookings]);
 
   // El carrito de versiones anteriores era uno solo para todos: se descarta para que no se "filtre" a otras cuentas.
-  useEffect(() => { localStorage.removeItem("lumina:cart"); }, []);
+  useEffect(() => { removeLocalStorageItem("lumina:cart"); }, []);
 
   // Catálogo desde la API (solo si VITE_API_URL está configurado).
   useEffect(() => {
@@ -83,20 +88,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const value: Ctx = {
     user, userKey, products, loading, apiError, cart, count, total, bookings, wishes, authOpen, cartOpen, setAuthOpen, setCartOpen,
-    // DEMO: contraseñas en localStorage. En producción usa un backend (Supabase, Firebase, etc.).
+    // DEMO: cuentas válidas solo mientras esta página está abierta; la autenticación real va en el backend.
     // El correo se compara sin mayúsculas ni espacios: "Ana@x.com" y "ana@x.com" son la misma cuenta (y el mismo carrito).
     register: (name, email, pass) => {
       const mail = email.trim().toLowerCase();
       if (accounts.some((a) => a.email.toLowerCase() === mail)) return "Ese correo ya tiene cuenta. Inicia sesión.";
       if (pass.length < 6) return "La contraseña necesita al menos 6 caracteres.";
       const a = { name, email: mail, pass };
-      setAccounts([...accounts, a]); setUser(a); return null;
+      setAccounts((current) => [...current, a]);
+      setUser({ name: a.name, email: a.email });
+      return null;
     },
     login: (email, pass) => {
       const mail = email.trim().toLowerCase();
       const a = accounts.find((x) => x.email.toLowerCase() === mail && x.pass === pass);
       if (!a) return "Correo o contraseña incorrectos.";
-      setUser(a); return null;
+      setUser({ name: a.name, email: a.email }); return null;
     },
     logout: () => setUser(null),
     add: (id, qty = 1) => updateCart((c) => ({ ...c, [id]: Math.min(99, (c[id] ?? 0) + qty) })),
@@ -122,7 +129,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     book: (b) => {
       if (!user) return "Inicia sesión para reservar.";
       if (b.time !== EMERGENCY_TIME && bookings.some((x) => x.date === b.date && x.time === b.time)) return "Ese horario ya está ocupado.";
-      setBookings([...bookings, { ...b, id: crypto.randomUUID(), email: user.email }]); return null;
+      setBookings((current) => [...current, { ...b, id: crypto.randomUUID(), email: user.email }]); return null;
     },
     cancel: (id) => setBookings((l) => l.filter((x) => x.id !== id)),
   };
