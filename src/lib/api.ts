@@ -1,9 +1,9 @@
 /**
  * Acceso a los datos del frontend.
  *
- * Sin VITE_API_URL, catálogo, pedidos y reservas funcionan en modo local.
- * Con VITE_API_URL, las operaciones remotas usan la misma API y sesión autenticada.
- * El chatbot conserva su respuesta local y solo consulta la API para fallbacks.
+ * Sin VITE_API_URL ni VITE_BOOKINGS_API_URL, catálogo, pedidos y reservas funcionan en modo local.
+ * VITE_BOOKINGS_API_URL permite conectar reservas de forma independiente; si no está definido,
+ * se reutiliza VITE_API_URL.
  */
 import seed from "@/data/products.json";
 import { EMERGENCY_TIME } from "@/lib/constants";
@@ -20,6 +20,7 @@ import type {
 } from "@/lib/types";
 
 const BASE = String(import.meta.env.VITE_API_URL ?? "").replace(/\/+$/, "");
+const BOOKINGS_BASE = String(import.meta.env.VITE_BOOKINGS_API_URL ?? BASE).replace(/\/+$/, "");
 const catalog = seed as unknown as Product[];
 const BOOKINGS_KEY = "lumina:bookings";
 
@@ -35,11 +36,11 @@ export class ApiError extends Error {
   }
 }
 
-async function http<T>(path: string, init?: RequestInit): Promise<T> {
+async function http<T>(path: string, init?: RequestInit, base = BASE): Promise<T> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 8000);
   try {
-    const res = await fetch(BASE + path, {
+    const res = await fetch(base + path, {
       ...init,
       signal: ctrl.signal,
       credentials: "include",
@@ -87,7 +88,7 @@ function saveLocalBookings(bookings: Booking[]) {
 }
 
 export const api = {
-  /** true cuando hay una API configurada en VITE_API_URL. */
+  /** true cuando hay una API general configurada en VITE_API_URL. */
   remote: BASE !== "",
 
   async getProducts(): Promise<Product[]> {
@@ -99,8 +100,15 @@ export const api = {
   async createOrder(order: OrderInput): Promise<OrderResult> {
     if (BASE) return http<OrderResult>("/api/orders", { method: "POST", body: JSON.stringify(order) });
 
-    const total = order.items.reduce((sum, line) => sum + (catalog.find((product) => product.id === line.id)?.price ?? 0) * line.qty, 0);
-    const result: OrderResult = { id: crypto.randomUUID().slice(0, 8).toUpperCase(), total, createdAt: new Date().toISOString() };
+    const total = order.items.reduce(
+      (sum, line) => sum + (catalog.find((product) => product.id === line.id)?.price ?? 0) * line.qty,
+      0,
+    );
+    const result: OrderResult = {
+      id: crypto.randomUUID().slice(0, 8).toUpperCase(),
+      total,
+      createdAt: new Date().toISOString(),
+    };
     try {
       const list = JSON.parse(getLocalStorageItem("lumina:orders") ?? "[]") as unknown[];
       list.push({ ...result, ...order });
@@ -112,16 +120,20 @@ export const api = {
   },
 
   async getBookings(ownerEmail: string): Promise<Booking[]> {
-    if (BASE) {
-      const data = await http<{ bookings: Booking[] }>("/api/bookings");
+    if (BOOKINGS_BASE) {
+      const data = await http<{ bookings: Booking[] }>("/api/bookings", undefined, BOOKINGS_BASE);
       return data.bookings;
     }
     return readLocalBookings().filter((booking) => booking.email === ownerEmail);
   },
 
   async getBookingAvailability(date: string): Promise<BookingAvailability> {
-    if (BASE) {
-      return http<BookingAvailability>("/api/bookings/availability?date=" + encodeURIComponent(date));
+    if (BOOKINGS_BASE) {
+      return http<BookingAvailability>(
+        "/api/bookings/availability?date=" + encodeURIComponent(date),
+        undefined,
+        BOOKINGS_BASE,
+      );
     }
     const unavailableSlots = Array.from(
       new Set(
@@ -134,11 +146,16 @@ export const api = {
   },
 
   async createBooking(input: BookingInput, ownerEmail: string): Promise<Booking> {
-    if (BASE) {
-      return http<Booking>("/api/bookings", { method: "POST", body: JSON.stringify(input) });
+    if (BOOKINGS_BASE) {
+      return http<Booking>(
+        "/api/bookings",
+        { method: "POST", body: JSON.stringify(input) },
+        BOOKINGS_BASE,
+      );
     }
     const bookings = readLocalBookings();
-    const conflict = input.time !== EMERGENCY_TIME &&
+    const conflict =
+      input.time !== EMERGENCY_TIME &&
       bookings.some((booking) => booking.date === input.date && booking.time === input.time);
     if (conflict) throw new ApiError("Ese horario ya está ocupado.", 409, "SLOT_UNAVAILABLE");
 
@@ -148,8 +165,12 @@ export const api = {
   },
 
   async cancelBooking(id: string, ownerEmail: string): Promise<void> {
-    if (BASE) {
-      await http<void>("/api/bookings/" + encodeURIComponent(id), { method: "DELETE" });
+    if (BOOKINGS_BASE) {
+      await http<void>(
+        "/api/bookings/" + encodeURIComponent(id),
+        { method: "DELETE" },
+        BOOKINGS_BASE,
+      );
       return;
     }
     const bookings = readLocalBookings();

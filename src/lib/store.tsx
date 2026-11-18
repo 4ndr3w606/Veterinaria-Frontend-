@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode, type MouseEvent } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode, type MouseEvent } from "react";
 import seed from "@/data/products.json";
 import { ApiError, api } from "@/lib/api";
 import { getLocalStorageItem, removeLocalStorageItem, setLocalStorageItem } from "@/lib/safeStorage";
@@ -37,6 +37,7 @@ type Ctx = {
   checkout: () => Promise<string | null>;
   toggleWish: (id: number) => void;
   getBookingAvailability: (date: string) => Promise<BookingAvailability>;
+  refreshBookings: () => Promise<void>;
   book: (booking: BookingInput) => Promise<string | null>;
   cancel: (id: string) => Promise<string | null>;
 };
@@ -51,8 +52,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [carts, setCarts] = useState<Record<string, Cart>>(() => read<Record<string, Cart>>("lumina:carts", {}));
   const [allWishes, setAllWishes] = useState<Record<string, number[]>>(() => read<Record<string, number[]>>("lumina:wishes", {}));
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bookingsOwnerEmail, setBookingsOwnerEmail] = useState<string | null>(null);
   const [bookingsLoading, setBookingsLoading] = useState(false);
   const [bookingsError, setBookingsError] = useState<string | null>(null);
+  const bookingRequestId = useRef(0);
+  const activeBookingEmailRef = useRef<string | null>(null);
+  const lastAutomaticBookingSync = useRef(0);
   const [authOpen, setAuthOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [products, setProducts] = useState<Product[]>(api.remote ? [] : PRODUCTS);
@@ -68,29 +73,52 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => { setLocalStorageItem("lumina:wishes", JSON.stringify(allWishes)); }, [allWishes]);
 
 
-  // El carrito de versiones anteriores era uno solo para todos: se descarta para que no se "filtre" a otras cuentas.
-  useEffect(() => {
-    let off = false;
-    setBookings([]);
-    setBookingsError(null);
-    if (!user) {
-      setBookingsLoading(false);
-      return;
+  const fetchBookings = useCallback(async (email: string) => {
+    const requestId = ++bookingRequestId.current;
+    if (activeBookingEmailRef.current !== email) return;
+
+    try {
+      const list = await api.getBookings(email);
+      if (requestId === bookingRequestId.current && activeBookingEmailRef.current === email) {
+        setBookings(list);
+        setBookingsOwnerEmail(email);
+        setBookingsError(null);
+      }
+    } catch (error: unknown) {
+      if (requestId === bookingRequestId.current && activeBookingEmailRef.current === email) {
+        setBookings([]);
+        setBookingsOwnerEmail(email);
+        setBookingsError(error instanceof ApiError ? error.message : "No se pudieron cargar tus citas.");
+      }
+    } finally {
+      if (requestId === bookingRequestId.current && activeBookingEmailRef.current === email) {
+        setBookingsLoading(false);
+      }
     }
+  }, []);
 
+  const refreshBookings = useCallback(async () => {
+    const email = activeBookingEmailRef.current;
+    if (!email) return;
     setBookingsLoading(true);
-    api.getBookings(user.email)
-      .then((list) => { if (!off) setBookings(list); })
-      .catch((error: unknown) => {
-        if (!off) {
-          setBookings([]);
-          setBookingsError(error instanceof ApiError ? error.message : "No se pudieron cargar tus citas.");
-        }
-      })
-      .finally(() => { if (!off) setBookingsLoading(false); });
-    return () => { off = true; };
-  }, [user?.email]);
-
+    setBookingsError(null);
+    await fetchBookings(email);
+  }, [fetchBookings]);
+  useEffect(() => {
+    const syncWhenActive = () => {
+      if (document.visibilityState === "hidden" || !activeBookingEmailRef.current) return;
+      const now = Date.now();
+      if (now - lastAutomaticBookingSync.current < 1500) return;
+      lastAutomaticBookingSync.current = now;
+      void refreshBookings();
+    };
+    window.addEventListener("focus", syncWhenActive);
+    document.addEventListener("visibilitychange", syncWhenActive);
+    return () => {
+      window.removeEventListener("focus", syncWhenActive);
+      document.removeEventListener("visibilitychange", syncWhenActive);
+    };
+  }, [refreshBookings]);
   useEffect(() => { removeLocalStorageItem("lumina:cart"); }, []);
 
   // Catálogo desde la API (solo si VITE_API_URL está configurado).
@@ -114,7 +142,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const total = products.reduce((s, p) => s + p.price * (cart[p.id] ?? 0), 0);
 
   const value: Ctx = {
-    user, userKey, products, loading, apiError, cart, count, total, bookings, bookingsLoading, bookingsError, wishes, authOpen, cartOpen, setAuthOpen, setCartOpen,
+    user, userKey, products, loading, apiError, cart, count, total, bookings: user && bookingsOwnerEmail === user.email ? bookings : [], bookingsLoading, bookingsError, wishes, authOpen, cartOpen, setAuthOpen, setCartOpen,
     // DEMO: cuentas válidas solo mientras esta página está abierta; la autenticación real va en el backend.
     // El correo se compara sin mayúsculas ni espacios: "Ana@x.com" y "ana@x.com" son la misma cuenta (y el mismo carrito).
     register: (name, email, pass) => {
@@ -123,16 +151,39 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (pass.length < 6) return "La contraseña necesita al menos 6 caracteres.";
       const a = { name, email: mail, pass };
       setAccounts((current) => [...current, a]);
+      activeBookingEmailRef.current = mail;
+      bookingRequestId.current += 1;
+      setBookings([]);
+      setBookingsOwnerEmail(null);
+      setBookingsLoading(true);
+      setBookingsError(null);
       setUser({ name: a.name, email: a.email });
+      void fetchBookings(mail);
       return null;
     },
     login: (email, pass) => {
       const mail = email.trim().toLowerCase();
       const a = accounts.find((x) => x.email.toLowerCase() === mail && x.pass === pass);
       if (!a) return "Correo o contraseña incorrectos.";
-      setUser({ name: a.name, email: a.email }); return null;
+      activeBookingEmailRef.current = mail;
+      bookingRequestId.current += 1;
+      setBookings([]);
+      setBookingsOwnerEmail(null);
+      setBookingsLoading(true);
+      setBookingsError(null);
+      setUser({ name: a.name, email: a.email });
+      void fetchBookings(mail);
+      return null;
     },
-    logout: () => setUser(null),
+    logout: () => {
+      activeBookingEmailRef.current = null;
+      bookingRequestId.current += 1;
+      setBookings([]);
+      setBookingsOwnerEmail(null);
+      setBookingsLoading(false);
+      setBookingsError(null);
+      setUser(null);
+    },
     add: (id, qty = 1) => updateCart((c) => ({ ...c, [id]: Math.min(99, (c[id] ?? 0) + qty) })),
     setQty: (id, q) => updateCart((c) => { const n = { ...c }; if (q <= 0) delete n[id]; else n[id] = Math.min(99, q); return n; }),
     checkout: async () => {
@@ -154,11 +205,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       return { ...all, [userKey]: cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id] };
     }),
     getBookingAvailability,
+    refreshBookings,
     book: async (booking) => {
       if (!user) return "Inicia sesión para reservar.";
       try {
-        const created = await api.createBooking(booking, user.email);
-        setBookings((current) => [...current, created]);
+        await api.createBooking(booking, user.email);
+        if (activeBookingEmailRef.current === user.email) await refreshBookings();
         return null;
       } catch (error) {
         if (error instanceof ApiError && error.status === 409) return "Ese horario ya está ocupado.";
@@ -171,7 +223,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (!user) return "Inicia sesión para cancelar."; 
       try {
         await api.cancelBooking(id, user.email);
-        setBookings((current) => current.filter((booking) => booking.id !== id));
+        if (activeBookingEmailRef.current === user.email) await refreshBookings();
         return null;
       } catch (error) {
         if (error instanceof ApiError && error.status === 404) return "No encontramos esa cita.";

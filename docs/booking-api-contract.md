@@ -67,6 +67,16 @@ DELETE /api/bookings/{id}
 
 Respuesta 204 sin cuerpo. El backend debe verificar que la reserva pertenezca a la sesión autenticada. Una reserva inexistente o ajena responde 404.
 
+
+## Sincronización del frontend
+
+- Al iniciar sesión, el frontend carga las reservas del usuario.
+- Después de crear o cancelar una reserva, vuelve a pedir la lista al backend.
+- Al volver a la pestaña y con el botón «Actualizar», consulta nuevamente las reservas.
+- La disponibilidad se vuelve a consultar cuando cambia la lista de reservas.
+- No hay sondeo continuo ni actualización en tiempo real; los cambios hechos desde otra sesión aparecen al volver a la pestaña o actualizar manualmente.
+
+La URL exclusiva de reservas se configura con VITE_BOOKINGS_API_URL. Si no se define, se usa VITE_API_URL; si ninguna está configurada, se conserva el modo local. No se copian reservas remotas al almacenamiento local: el backend sigue siendo la fuente de verdad.
 ## Alcance
 
 Este repositorio implementa el cliente y el modo local. Los endpoints anteriores son el contrato para el backend futuro; el servidor de ejemplo actual todavía no los implementa. El inicio de sesión actual también es de demostración y no crea una sesión del backend: la integración remota de reservas requiere conectar primero la autenticación real para establecer la cookie.

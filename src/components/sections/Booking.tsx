@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowUpRight, Check, Trash2 } from "lucide-react";
+import { ArrowUpRight, Check, RefreshCw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -22,7 +22,7 @@ const chip = (on: boolean, off = false) =>
 const ALL_SERVICES = [...SERVICES, "Emergencia"];
 
 export function Booking() {
-  const { user, setAuthOpen, bookings, bookingsLoading, bookingsError, book, cancel, getBookingAvailability } = useStore();
+  const { user, setAuthOpen, bookings, bookingsLoading, bookingsError, book, cancel, getBookingAvailability, refreshBookings } = useStore();
   const [sent, setSent] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [cancelErr, setCancelErr] = useState<string | null>(null);
@@ -51,14 +51,8 @@ export function Booking() {
   const taken = (time: string) => unavailableSlots.includes(time);
 
   useEffect(() => {
-    if (!date || service === "Emergencia") {
-      setUnavailableSlots([]);
-      setAvailabilityLoading(false);
-      return;
-    }
+    if (!date || service === "Emergencia") return;
     let active = true;
-    setAvailabilityLoading(true);
-    setErr(null);
     getBookingAvailability(date)
       .then((availability) => {
         if (active) {
@@ -74,14 +68,20 @@ export function Booking() {
       })
       .finally(() => { if (active) setAvailabilityLoading(false); });
     return () => { active = false; };
-  }, [date, service, getBookingAvailability]);
+  }, [date, service, bookings, getBookingAvailability]);
 
   const handleServiceChange = (selectedService: string) => {
     setService(selectedService);
+    setErr(null);
     if (selectedService === "Emergencia") {
       setDate(today);
+      setTime("");
+      setUnavailableSlots([]);
+      setAvailabilityLoading(false);
     } else {
       setTime("");
+      setUnavailableSlots([]);
+      setAvailabilityLoading(Boolean(date));
     }
   };
 
@@ -259,8 +259,12 @@ export function Booking() {
                     value={date}
                     disabled={service === "Emergencia"}
                     onChange={(e) => {
-                      setDate(e.target.value);
+                      const nextDate = e.target.value;
+                      setDate(nextDate);
                       setTime("");
+                      setUnavailableSlots([]);
+                      setAvailabilityLoading(Boolean(nextDate));
+                      setErr(null);
                     }}
                     className="h-12 rounded-xl disabled:opacity-80"
                   />
@@ -317,7 +321,19 @@ export function Booking() {
             {/* Mis Citas */}
             {user && (
               <div className="mt-8 border-t pt-6">
-                <h4 className="font-display text-xl">Mis citas</h4>
+                <div className="flex items-center justify-between gap-3">
+                  <h4 className="font-display text-xl">Mis citas</h4>
+                  <button
+                    type="button"
+                    onClick={() => void refreshBookings()}
+                    disabled={bookingsLoading}
+                    className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground disabled:opacity-50"
+                    aria-label="Actualizar mis citas"
+                  >
+                    <RefreshCw className="size-4" />
+                    Actualizar
+                  </button>
+                </div>
                 {bookingsLoading ? (
                   <p className="mt-3 text-sm text-muted-foreground">Cargando tus citas...</p>
                 ) : bookingsError ? (
@@ -358,7 +374,8 @@ export function Booking() {
                   </>
                 )}
               </div>
-            )}          </CardContent>
+            )}
+          </CardContent>
         </Card>
       </Reveal>
     </section>
