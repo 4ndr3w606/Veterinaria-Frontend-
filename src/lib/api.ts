@@ -6,6 +6,16 @@
  * se reutiliza VITE_API_URL.
  */
 import seed from "@/data/products.json";
+import {
+  isBooking,
+  isBookingAvailability,
+  isBookingsResponse,
+  isBotReply,
+  isEmptyResponse,
+  isOrderResult,
+  isProductsResponse,
+  isRecord,
+} from "@/lib/apiValidation";
 import { EMERGENCY_TIME } from "@/lib/constants";
 import { getLocalStorageItem, setLocalStorageItem } from "@/lib/safeStorage";
 import type {
@@ -36,7 +46,20 @@ export class ApiError extends Error {
   }
 }
 
-async function http<T>(path: string, init?: RequestInit, base = BASE): Promise<T> {
+function invalidResponse(status: number) {
+  return new ApiError(
+    "La API devolvió datos con un formato inesperado.",
+    status,
+    "INVALID_API_RESPONSE",
+  );
+}
+
+async function http<T>(
+  path: string,
+  validate: (value: unknown) => value is T,
+  init?: RequestInit,
+  base = BASE,
+): Promise<T> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 8000);
   try {
@@ -47,16 +70,26 @@ async function http<T>(path: string, init?: RequestInit, base = BASE): Promise<T
       headers: { "Content-Type": "application/json", ...init?.headers },
     });
     if (!res.ok) {
-      const payload = await res.json().catch(() => null);
-      const error = payload?.error;
+      const payload: unknown = await res.json().catch(() => null);
+      const error = isRecord(payload) ? payload.error : undefined;
+      const message = typeof error === "string" ? error : isRecord(error) ? error.message : undefined;
+      const code = isRecord(error) ? error.code : undefined;
       throw new ApiError(
-        typeof error?.message === "string" ? error.message : "Error de la API (HTTP " + res.status + ").",
+        typeof message === "string" && message.trim() ? message : "Error de la API (HTTP " + res.status + ").",
         res.status,
-        typeof error?.code === "string" ? error.code : undefined,
+        typeof code === "string" ? code : undefined,
       );
     }
-    if (res.status === 204) return undefined as T;
-    return (await res.json()) as T;
+
+    let payload: unknown;
+    try {
+      payload = res.status === 204 ? undefined : await res.json();
+    } catch (error) {
+      if (error instanceof SyntaxError) throw invalidResponse(res.status);
+      throw error;
+    }
+    if (!validate(payload)) throw invalidResponse(res.status);
+    return payload;
   } finally {
     clearTimeout(timer);
   }
@@ -93,12 +126,12 @@ export const api = {
 
   async getProducts(): Promise<Product[]> {
     if (!BASE) return catalog;
-    const data = await http<{ products: Product[] }>("/api/products");
+    const data = await http("/api/products", isProductsResponse);
     return data.products;
   },
 
   async createOrder(order: OrderInput): Promise<OrderResult> {
-    if (BASE) return http<OrderResult>("/api/orders", { method: "POST", body: JSON.stringify(order) });
+    if (BASE) return http("/api/orders", isOrderResult, { method: "POST", body: JSON.stringify(order) });
 
     const total = order.items.reduce(
       (sum, line) => sum + (catalog.find((product) => product.id === line.id)?.price ?? 0) * line.qty,
@@ -121,7 +154,7 @@ export const api = {
 
   async getBookings(ownerEmail: string): Promise<Booking[]> {
     if (BOOKINGS_BASE) {
-      const data = await http<{ bookings: Booking[] }>("/api/bookings", undefined, BOOKINGS_BASE);
+      const data = await http("/api/bookings", isBookingsResponse, undefined, BOOKINGS_BASE);
       return data.bookings;
     }
     return readLocalBookings().filter((booking) => booking.email === ownerEmail);
@@ -129,8 +162,9 @@ export const api = {
 
   async getBookingAvailability(date: string): Promise<BookingAvailability> {
     if (BOOKINGS_BASE) {
-      return http<BookingAvailability>(
+      return http(
         "/api/bookings/availability?date=" + encodeURIComponent(date),
+        (value): value is BookingAvailability => isBookingAvailability(value) && value.date === date,
         undefined,
         BOOKINGS_BASE,
       );
@@ -147,8 +181,9 @@ export const api = {
 
   async createBooking(input: BookingInput, ownerEmail: string): Promise<Booking> {
     if (BOOKINGS_BASE) {
-      return http<Booking>(
+      return http(
         "/api/bookings",
+        isBooking,
         { method: "POST", body: JSON.stringify(input) },
         BOOKINGS_BASE,
       );
@@ -166,8 +201,9 @@ export const api = {
 
   async cancelBooking(id: string, ownerEmail: string): Promise<void> {
     if (BOOKINGS_BASE) {
-      await http<void>(
+      await http(
         "/api/bookings/" + encodeURIComponent(id),
+        isEmptyResponse,
         { method: "DELETE" },
         BOOKINGS_BASE,
       );
@@ -181,6 +217,6 @@ export const api = {
 
   /** Solo se consulta si hay API remota y el bot local no sabe qué responder. */
   chat(message: string, history: ChatTurn[]): Promise<BotReply> {
-    return http<BotReply>("/api/chat", { method: "POST", body: JSON.stringify({ message, history }) });
+    return http("/api/chat", isBotReply, { method: "POST", body: JSON.stringify({ message, history }) });
   },
 };

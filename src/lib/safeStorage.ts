@@ -23,3 +23,12 @@ export function removeLocalStorageItem(key: string): boolean {
     return false;
   }
 }
+
+/** Lee JSON persistido o usa el valor inicial si no existe o no se puede leer. */
+export function readLocalStorageJson<T>(key: string, fallback: T): T {
+  try {
+    return (JSON.parse(getLocalStorageItem(key) ?? "") as T) ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
