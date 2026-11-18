@@ -9,7 +9,6 @@ import { Pic } from "./ProductImage";
 /**
  * Vista rápida de un producto con el <dialog> nativo del navegador: ya trae el cierre con Escape, el foco
  * atrapado y el fondo oscuro, así que no hace falta nada más para que sea accesible.
- * Aquí el GIF se reproduce solo.
  */
 export function QuickView({ p, onClose }: { p: Product | null; onClose: () => void }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -36,7 +35,7 @@ export function QuickView({ p, onClose }: { p: Product | null; onClose: () => vo
       {p && (
         <div className="grid gap-6 p-5 md:grid-cols-2 md:gap-8 md:p-8">
           <div className="shop-shine glow-card relative overflow-hidden rounded-3xl">
-            <Pic key={`${p.id}:${p.image}:${p.gif ?? ""}`} p={p} play className="aspect-[4/5] w-full" />
+            <Pic key={`${p.id}:${p.image}`} p={p} className="aspect-[4/5] w-full" />
             {p.tag && <span className="shop-tag absolute top-3 left-3 rounded-full bg-accent px-3 py-1 text-xs font-bold text-accent-foreground">{p.tag}</span>}
           </div>
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowDown, ArrowLeft, PawPrint, Sparkles, Stethoscope, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,6 @@ const PERKS = [
 
 export default function Shop() {
   const { products } = useStore();
-  const [heroHover, setHeroHover] = useState(false);
   const hero = products.find((p) => p.featured) ?? products[0];
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
@@ -96,10 +95,8 @@ export default function Shop() {
               <span className="shop-aura" aria-hidden="true" />
               <div
                 className="shop-float arch shop-shine relative overflow-hidden"
-                onPointerEnter={(e) => { if (e.pointerType !== "touch") setHeroHover(true); }}
-                onPointerLeave={() => setHeroHover(false)}
               >
-                <Pic p={hero} play={heroHover} className="aspect-[4/5] w-full" />
+                <Pic p={hero} className="aspect-[4/5] w-full" />
               </div>
             </div>
           )}

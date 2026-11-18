@@ -65,7 +65,6 @@ function isProduct(value: unknown): value is Product {
     isAmount(value.price) &&
     typeof value.image === "string" &&
     typeof value.desc === "string" &&
-    isOptionalString(value.gif) &&
     isOptionalString(value.tag) &&
     isOptionalBoolean(value.featured);
 }

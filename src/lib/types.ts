@@ -8,8 +8,6 @@ export type Product = {
   pet: Pet;
   price: number;
   image: string;
-  /** GIF opcional: se reproduce al pasar el cursor por la tarjeta. */
-  gif?: string;
   desc: string;
   featured?: boolean;
   /** Etiqueta opcional sobre la imagen ("Nuevo", etc.). */

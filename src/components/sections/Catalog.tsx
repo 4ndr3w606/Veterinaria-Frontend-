@@ -45,7 +45,6 @@ export function Catalog() {
   const [sort, setSort] = useState<SortKey>("rec");
   const [onlyWish, setOnlyWish] = useState(false);
   const [quick, setQuick] = useState<Product | null>(null);
-  const [spot, setSpot] = useState(false);
 
   // Las categorías cuentan solo los productos de la mascota elegida.
   const cats = useMemo(() => {
@@ -92,11 +91,9 @@ export function Catalog() {
                   <div
                     className="glow-card shop-shine relative overflow-hidden rounded-3xl"
                     onMouseMove={glow}
-                    onPointerEnter={(e) => { if (e.pointerType !== "touch") setSpot(true); }}
-                    onPointerLeave={() => setSpot(false)}
                   >
                     <button type="button" onClick={() => setQuick(feat)} aria-label={`Ver detalles de ${feat.name}`} className="block w-full cursor-zoom-in">
-                      <Pic p={feat} play={spot} className="aspect-[4/5] w-full" />
+                      <Pic p={feat} className="aspect-[4/5] w-full" />
                     </button>
                   </div>
                   <span className="shop-sticker absolute -top-3 -right-3 flex size-20 items-center justify-center rounded-full bg-accent p-2 text-center text-xs leading-tight font-bold text-accent-foreground">
