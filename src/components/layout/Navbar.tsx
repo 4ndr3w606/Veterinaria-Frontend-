@@ -1,6 +1,5 @@
-import { Link } from "react-router-dom";
-import { ArrowUpRight, LogOut, Menu, ShoppingCart, Store, UserRound } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowUpRight, Menu, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -14,24 +13,23 @@ import { Magnetic } from "@/components/animations/Magnetic";
 import { Logo } from "@/components/layout/Logo";
 import { links } from "@/data/siteData";
 import { go } from "@/lib/utils";
-import { useStore } from "@/lib/store";
+import { AccountBar } from "@/components/layout/AccountBar";
 
 export function Navbar() {
   const navigate = useNavigate();
   const toShop = () => navigate("/tienda");
-  const { user, logout, setAuthOpen, setCartOpen, count } = useStore();
 
   return (
-    <header className="fixed inset-x-0 top-4 z-50 px-4">
+    <header className="fixed inset-x-0 top-4 z-50 px-3 sm:px-4">
       {/* Fila: [barra de navegación] [iconos de acciones] */}
-      <div className="mx-auto flex max-w-6xl items-center gap-3">
-        <nav className="flex flex-1 items-center justify-between rounded-full border bg-background/70 py-3 pr-3 pl-5 text-lg backdrop-blur-xl">
-          <button onClick={() => go("inicio")} aria-label="Volver al inicio">
-            <Logo />
+      <div className="mx-auto flex max-w-6xl items-center gap-2 sm:gap-3">
+        <nav aria-label="Navegación principal" className="flex min-w-0 flex-1 items-center justify-between gap-2 rounded-full border bg-background/70 py-3 pr-2 pl-3 text-lg backdrop-blur-xl sm:pr-3 sm:pl-5">
+          <button type="button" className="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50" onClick={() => go("inicio")} aria-label="Volver al inicio">
+            <Logo compactOnMobile />
           </button>
 
           {/* Enlaces de escritorio */}
-          <div className="hidden items-center gap-1 md:flex">
+          <div className="hidden items-center gap-1 xl:flex">
             {links.map(([label, id]) => (
               <Button
                 key={id}
@@ -45,7 +43,7 @@ export function Navbar() {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="hidden sm:block">
+            <span className="hidden lg:block">
               <Magnetic>
                 <Button className="rounded-full" onClick={() => go("cita")}>
                   Reserva una visita <ArrowUpRight />
@@ -57,7 +55,7 @@ export function Navbar() {
             <Sheet>
               <SheetTrigger
                 render={
-                  <Button variant="outline" size="icon" className="rounded-full md:hidden" aria-label="Abrir menú">
+                  <Button variant="outline" size="icon" className="size-11 rounded-full xl:hidden" aria-label="Abrir menú">
                     <Menu />
                   </Button>
                 }
@@ -93,47 +91,16 @@ export function Navbar() {
           </div>
         </nav>
 
-        {/* NUEVO: iconos fuera de la barra */}
-     <div className="flex items-center gap-2 rounded-full border bg-background/70 p-2 backdrop-blur-xl">
-<Link
-  to="/tienda"
-  title="Tienda"
-  aria-label="Tienda"
-  className="inline-flex size-12 items-center justify-center rounded-full text-primary hover:bg-muted sm:size-12"
->
-  <Store className="size-6" />
-</Link>
-  <Button
-    variant="ghost"
-    size="icon"
-    title={user ? `Salir (${user.name.split(" ")[0]})` : "Entrar"}
-    aria-label={user ? "Cerrar sesión" : "Entrar"}
-    className="size-12 rounded-full"
-    onClick={() => (user ? logout() : setAuthOpen(true))}
-  >
-    {user ? <LogOut className="size-6" /> : <UserRound className="size-6" />}
-  </Button>
-
-  <Button
-    variant="secondary"
-    size="icon"
-    title="Carrito"
-    aria-label="Carrito"
-    data-cart-target
-    className="relative size-12 rounded-full"
-    onClick={() => setCartOpen(true)}
-  >
-    <ShoppingCart className="size-6" />
-    {count > 0 && (
-      <span
-        key={count}
-        className="bubble absolute -top-1 -right-1 flex size-6 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground"
-      >
-        {count}
-      </span>
-    )}
-  </Button>
-</div>
+        <AccountBar>
+          <Link
+            to="/tienda"
+            title="Tienda"
+            aria-label="Tienda"
+            className="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-primary hover:bg-muted focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          >
+            <Store className="size-5" aria-hidden="true" />
+          </Link>
+        </AccountBar>
       </div>
     </header>
   );

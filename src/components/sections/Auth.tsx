@@ -1,30 +1,9 @@
 import { useState } from "react";
-import { LogOut, PawPrint, ShoppingBag, X } from "lucide-react";
+import { PawPrint, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useStore } from "@/lib/store";
-
-/** Barra flotante: cuenta + carrito. Colócala una vez en App. */
-export function AccountBar({ className = "" }: { className?: string }) {
-  const { user, logout, setAuthOpen, setCartOpen, count } = useStore();
-  return (
-    <div className={`flex items-center gap-2 rounded-full border bg-card/80 p-1.5 backdrop-blur-md ${className}`}>
-      {user ? (
-        <>
-          <span className="px-3 text-sm">Hola, <span className="font-display italic text-primary">{user.name.split(" ")[0]}</span></span>
-          <Button size="icon" variant="ghost" className="rounded-full" onClick={logout} aria-label="Salir"><LogOut /></Button>
-        </>
-      ) : (
-        <Button size="sm" className="rounded-full" onClick={() => setAuthOpen(true)}><PawPrint /> Entrar</Button>
-      )}
-      <Button size="icon" variant="secondary" className="relative rounded-full" onClick={() => setCartOpen(true)} aria-label="Carrito" data-cart-target>
-        <ShoppingBag />
-        {count > 0 && <span key={count} className="bubble absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-accent text-[11px] font-bold text-accent-foreground">{count}</span>}
-      </Button>
-    </div>
-  );
-}
 
 export function AuthModal() {
   const { authOpen, setAuthOpen, login, register } = useStore();

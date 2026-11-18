@@ -4,7 +4,7 @@ import { ArrowDown, ArrowLeft, PawPrint, Sparkles, Stethoscope, Truck } from "lu
 import { Button } from "@/components/ui/button";
 import { Counter } from "@/components/animations/Counter";
 import { Reveal } from "@/components/animations/Reveal";
-import { AccountBar } from "@/components/sections/Auth";
+import { AccountBar } from "@/components/layout/AccountBar";
 import { Catalog } from "@/components/sections/Catalog";
 import { BackToTop } from "@/components/shop/BackToTop";
 import { Pic } from "@/components/shop/ProductImage";
@@ -43,7 +43,7 @@ export default function Shop() {
           <ArrowLeft className="size-4 transition-transform group-hover:-translate-x-1" /> Inicio
         </Link>
         <span className="hidden font-display text-xl text-primary italic sm:block">Lúmina</span>
-        <AccountBar />
+        <AccountBar showGreeting />
       </header>
 
       {/* La linterna sigue al cursor; sin cursor, se pasea sola */}
