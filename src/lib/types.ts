@@ -30,15 +30,6 @@ export type OrderLine = { id: number; qty: number };
 export type OrderInput = { email: string | null; items: OrderLine[] };
 export type OrderResult = { id: string; total: number; createdAt: string };
 
-/** Acciones que el chatbot puede ejecutar dentro de la web. */
-export type BotAction =
-  | { type: "add"; id: number; qty: number }
-  | { type: "openCart" }
-  | { type: "openAuth" }
-  | { type: "goShop" }
-  | { type: "goHome" }
-  | { type: "goBooking" };
-
-/** `fallback: true` = el bot local no entendió; si hay API, se le pregunta al servidor. */
-export type BotReply = { text: string; chips?: string[]; actions?: BotAction[]; fallback?: boolean };
-export type ChatTurn = { from: "bot" | "me"; text: string };
+/** Luma solo abre secciones; no modifica compras ni reservas. */
+export type BotAction = "openCart" | "openAuth" | "goShop" | "goBooking";
+export type BotReply = { text: string; chips?: string[]; action?: BotAction };

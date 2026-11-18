@@ -5,27 +5,36 @@ import { useStore } from "@/lib/store";
 /** Luma: la mascota y, al hacer clic, el chatbot de la web. */
 export function Mascot() {
   const ref = useRef<HTMLDivElement>(null);
+  const hopTimer = useRef(0);
   const { userKey } = useStore();
   const [say, setSay] = useState<string | null>(null);
   const [hop, setHop] = useState(false);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    // Escucha el movimiento del cursor para mover las pupilas de Luma
-    const handlePointerMove = (e: globalThis.PointerEvent) => {
+    // Procesa la última posición una vez por fotograma, fuera del render de React.
+    let frame = 0;
+    let clientX = 0;
+    let clientY = 0;
+    const pupils = ref.current?.querySelectorAll<SVGCircleElement>(".luma-pupil");
+    const draw = () => {
+      frame = 0;
       const el = ref.current;
       if (!el) return;
       const r = el.getBoundingClientRect();
-      const dx = e.clientX - (r.left + r.width / 2);
-      const dy = e.clientY - (r.top + r.height * 0.45);
-      const d = Math.hypot(dx, dy) || 1;
-      const k = Math.min(1, d / 220) * 3.6;
-
-      el.style.setProperty("--ex", `${(dx / d) * k}px`);
-      el.style.setProperty("--ey", `${(dy / d) * k}px`);
+      const dx = clientX - (r.left + r.width / 2);
+      const dy = clientY - (r.top + r.height * 0.45);
+      const distance = Math.hypot(dx, dy) || 1;
+      const amount = Math.min(1, distance / 220) * 3.6;
+      const transform = `translate(${(dx / distance) * amount}px, ${(dy / distance) * amount}px)`;
+      pupils?.forEach((pupil) => { pupil.style.transform = transform; });
     };
-
-    window.addEventListener("pointermove", handlePointerMove);
+    const handlePointerMove = (event: globalThis.PointerEvent) => {
+      clientX = event.clientX;
+      clientY = event.clientY;
+      if (!frame) frame = requestAnimationFrame(draw);
+    };
+    window.addEventListener("pointermove", handlePointerMove, { passive: true });
 
     // Saludo inicial automático
     const timerA = window.setTimeout(() => setSay("¡Hola! Soy Luma. ¿Te ayudo?"), 2400);
@@ -33,6 +42,8 @@ export function Mascot() {
 
     return () => {
       window.removeEventListener("pointermove", handlePointerMove);
+      cancelAnimationFrame(frame);
+      window.clearTimeout(hopTimer.current);
       clearTimeout(timerA);
       clearTimeout(timerB);
     };
@@ -41,7 +52,8 @@ export function Mascot() {
   // Al hacer clic: salta y abre o cierra el chat
   const toggle = () => {
     setHop(true);
-    window.setTimeout(() => setHop(false), 650);
+    window.clearTimeout(hopTimer.current);
+    hopTimer.current = window.setTimeout(() => setHop(false), 650);
     setOpen((o) => !o);
   };
 

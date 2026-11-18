@@ -10,7 +10,6 @@ import {
   isBooking,
   isBookingAvailability,
   isBookingsResponse,
-  isBotReply,
   isEmptyResponse,
   isOrderResult,
   isProductsResponse,
@@ -22,8 +21,6 @@ import type {
   Booking,
   BookingAvailability,
   BookingInput,
-  BotReply,
-  ChatTurn,
   OrderInput,
   OrderResult,
   Product,
@@ -215,8 +212,5 @@ export const api = {
     saveLocalBookings(bookings.filter((booking) => booking.id !== id));
   },
 
-  /** Solo se consulta si hay API remota y el bot local no sabe qué responder. */
-  chat(message: string, history: ChatTurn[]): Promise<BotReply> {
-    return http("/api/chat", isBotReply, { method: "POST", body: JSON.stringify({ message, history }) });
-  },
+
 };

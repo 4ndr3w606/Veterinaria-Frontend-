@@ -13,16 +13,27 @@ type Paw = { id: number; x: number; y: number; r: number };
 const L1 = "Pequeñas patas.";
 const L2 = "Grandes historias.";
 
-export function Hero() {
+function HeroTitle() {
   const n = useTyped(L1.length + L2.length);
   const n2 = Math.max(0, n - L1.length);
+  return (
+    <h1 aria-label={`${L1} ${L2}`} className="text-[clamp(3.2rem,9vw,7.5rem)] leading-[0.95] font-light tracking-tighter">
+            <span aria-hidden="true">
+              <span>{L1.slice(0, n)}<span className="opacity-0">{L1.slice(n)}</span>{n < L1.length && <i className="caret" />}</span>
+              <br />
+              <em className="font-light text-primary">{L2.slice(0, n2)}<span className="opacity-0">{L2.slice(n2)}</span>{n >= L1.length && <i className="caret" />}</em>
+            </span>
+    </h1>
+  );
+}
+
+export function Hero() {
   const [paws, setPaws] = useState<Paw[]>([]);
   const last = useRef({ x: -999, y: -999, id: 0, side: 1 });
 
   const onMove = (e: PointerEvent<HTMLElement>) => {
     e.currentTarget.dataset.idle = "false";
-    track(e);
-    const r = e.currentTarget.getBoundingClientRect();
+    const r = track(e);
     const x = e.clientX - r.left;
     const y = e.clientY - r.top;
     const l = last.current;
@@ -31,7 +42,6 @@ export function Hero() {
     l.x = x; l.y = y; l.side *= -1;
     const id = ++l.id;
     setPaws((p) => [...p.slice(-9), { id, x: x + l.side * 12, y, r: rot }]);
-    window.setTimeout(() => setPaws((p) => p.filter((q) => q.id !== id)), 1600);
   };
 
   return (
@@ -39,7 +49,7 @@ export function Hero() {
       <div className="lantern -z-10" />
       <div className="halo -z-10" />
       {paws.map((p) => (
-        <PawPrint key={p.id} className="paw-trail size-7" style={vars({ left: p.x, top: p.y, "--r": `${p.r}deg` })} />
+        <PawPrint key={p.id} onAnimationEnd={() => setPaws((current) => current.filter((paw) => paw.id !== p.id))} className="paw-trail size-7" style={vars({ left: p.x, top: p.y, "--r": `${p.r}deg` })} />
       ))}
 
       <div className="relative z-10 mx-auto grid min-h-svh max-w-6xl items-center gap-12 px-5 pt-32 pb-16 lg:grid-cols-[1.1fr_0.9fr]">
@@ -48,13 +58,7 @@ export function Hero() {
             <span className="size-3 rounded-full bg-primary" /> Un lugar para sentirse en casa
           </Badge>
 
-          <h1 aria-label={`${L1} ${L2}`} className="text-[clamp(3.2rem,9vw,7.5rem)] leading-[0.95] font-light tracking-tighter">
-            <span aria-hidden="true">
-              <span>{L1.slice(0, n)}<span className="opacity-0">{L1.slice(n)}</span>{n < L1.length && <i className="caret" />}</span>
-              <br />
-              <em className="font-light text-primary">{L2.slice(0, n2)}<span className="opacity-0">{L2.slice(n2)}</span>{n >= L1.length && <i className="caret" />}</em>
-            </span>
-          </h1>
+          <HeroTitle />
 
           <p className="enter mt-8 max-w-md text-lg leading-relaxed text-muted-foreground" style={vars({ "--i": 5 })}>
             Medicina veterinaria con ciencia, sensibilidad y mucho corazón. Mueve el cursor: dejarás huellas y la luz de Lúmina descubrirá las suyas.

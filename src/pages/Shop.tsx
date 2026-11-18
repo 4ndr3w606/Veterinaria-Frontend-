@@ -31,7 +31,6 @@ const PERKS = [
 
 export default function Shop() {
   const { products } = useStore();
-  const [idle, setIdle] = useState(true);
   const [heroHover, setHeroHover] = useState(false);
   const hero = products.find((p) => p.featured) ?? products[0];
   useEffect(() => { window.scrollTo(0, 0); }, []);
@@ -49,15 +48,15 @@ export default function Shop() {
       {/* La linterna sigue al cursor; sin cursor, se pasea sola */}
       <section
         className="hero relative overflow-hidden px-5 pt-16 pb-24"
-        data-idle={idle}
+        data-idle="true"
         onMouseMove={(e) => {
-          setIdle(false);
+          e.currentTarget.dataset.idle = "false";
           const r = e.currentTarget.getBoundingClientRect();
           e.currentTarget.style.setProperty("--mx", `${e.clientX - r.left}px`);
           e.currentTarget.style.setProperty("--my", `${e.clientY - r.top}px`);
         }}
         onMouseLeave={(e) => {
-          setIdle(true);
+          e.currentTarget.dataset.idle = "true";
           e.currentTarget.style.removeProperty("--mx");
           e.currentTarget.style.removeProperty("--my");
         }}

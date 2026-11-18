@@ -1,5 +1,5 @@
 import { EMERGENCY_TIME } from "@/lib/constants";
-import type { Booking, BookingAvailability, BotAction, BotReply, OrderResult, Product } from "@/lib/types";
+import type { Booking, BookingAvailability, OrderResult, Product } from "@/lib/types";
 
 export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -82,30 +82,6 @@ export function isOrderResult(value: unknown): value is OrderResult {
     isText(value.id) &&
     isAmount(value.total) &&
     isTimestamp(value.createdAt);
-}
-
-function isBotAction(value: unknown): value is BotAction {
-  if (!isRecord(value)) return false;
-  switch (value.type) {
-    case "add":
-      return isPositiveInteger(value.id) && isPositiveInteger(value.qty);
-    case "openCart":
-    case "openAuth":
-    case "goShop":
-    case "goHome":
-    case "goBooking":
-      return true;
-    default:
-      return false;
-  }
-}
-
-export function isBotReply(value: unknown): value is BotReply {
-  return isRecord(value) &&
-    isText(value.text) &&
-    (value.chips === undefined || (Array.isArray(value.chips) && value.chips.every((chip) => typeof chip === "string"))) &&
-    (value.actions === undefined || (Array.isArray(value.actions) && value.actions.every(isBotAction))) &&
-    isOptionalBoolean(value.fallback);
 }
 
 export const isEmptyResponse = (value: unknown): value is undefined => value === undefined;

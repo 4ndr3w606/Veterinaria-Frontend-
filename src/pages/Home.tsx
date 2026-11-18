@@ -1,3 +1,6 @@
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
+import { go } from "@/lib/utils";
 
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -11,6 +14,8 @@ import { Booking } from "@/components/sections/Booking";
 import { Visit } from "@/components/sections/Visit";
 
 export default function Home() {
+  const { hash, key } = useLocation();
+  useEffect(() => { if (hash === "#cita") go("cita"); }, [hash, key]);
   return (
     <>
       <Navbar />

@@ -1,113 +1,93 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { PawPrint, RotateCcw, Send, X } from "lucide-react";
-import { api } from "@/lib/api";
 import { botReply, DEFAULT_CHIPS } from "@/lib/bot";
 import { useStore } from "@/lib/store";
-import { go } from "@/lib/utils";
-import type { BotAction, BotReply } from "@/lib/types";
+import { isRecord } from "@/lib/apiValidation";
+import { readLocalStorageJson, setLocalStorageItem } from "@/lib/safeStorage";
+import type { BotAction } from "@/lib/types";
 
 type Msg = { id: string; from: "bot" | "me"; text: string };
-
 const MAX_SAVED = 40;
 const storageKey = (userKey: string) => `lumina:chat:${userKey}`;
-
 const greeting = (name: string | null): Msg => ({
   id: "greeting",
   from: "bot",
-  text: `¡Guau! Soy Luma 🐶, la asistente de Lúmina${name ? `. Qué bueno verte, ${name.split(" ")[0]}` : ""}.\nPuedo ayudarte con citas, horarios, servicios y la tienda (incluso añadir productos a tu cesta).`,
+  text: `¡Guau! Soy Luma 🐶${name ? `, hola ${name.trim().split(/\s+/)[0]}` : ""}. Puedo informarte sobre servicios y horarios, buscar productos, mostrar tus citas y abrir las secciones de la web.`,
 });
 
-function load(userKey: string): Msg[] {
-  try {
-    const saved = JSON.parse(localStorage.getItem(storageKey(userKey)) ?? "[]") as unknown;
-    return Array.isArray(saved) ? (saved as Msg[]).slice(-MAX_SAVED) : [];
-  } catch {
-    return [];
-  }
+function load(userKey: string, name: string | null): Msg[] {
+  const saved = readLocalStorageJson<unknown>(storageKey(userKey), []);
+  if (!Array.isArray(saved)) return [greeting(name)];
+  const valid = saved.filter((msg): msg is Msg => isRecord(msg) && typeof msg.id === "string" &&
+    (msg.from === "bot" || msg.from === "me") && typeof msg.text === "string").slice(-MAX_SAVED);
+  return valid.length ? valid.map((msg) => msg.id === "greeting" ? greeting(name) : msg) : [greeting(name)];
 }
 
-/**
- * Ventana del chat. Se monta con `key={userKey}` desde Mascot: así cada cuenta (y el invitado) tiene su propia
- * conversación y no se mezclan al cambiar de sesión.
- */
+/** La key de Mascot mantiene separada la conversación de cada cuenta. */
 export function ChatPanel({ onClose }: { onClose: () => void }) {
-  const { userKey, user, products, cart, total, bookings, add, setCartOpen, setAuthOpen } = useStore();
+  const { userKey, user, products, bookings, setCartOpen, setAuthOpen } = useStore();
   const navigate = useNavigate();
-  const { pathname } = useLocation();
-
-  const [msgs, setMsgs] = useState<Msg[]>(() => {
-    const saved = load(userKey);
-    return saved.length ? saved : [greeting(user?.name ?? null)];
-  });
+  const [msgs, setMsgs] = useState<Msg[]>(() => load(userKey, user?.name ?? null));
   const [chips, setChips] = useState<string[]>(DEFAULT_CHIPS);
   const [typing, setTyping] = useState(false);
   const [input, setInput] = useState("");
   const box = useRef<HTMLDivElement>(null);
   const field = useRef<HTMLInputElement>(null);
+  const timer = useRef<number | null>(null);
 
-  useEffect(() => {
-    try { localStorage.setItem(storageKey(userKey), JSON.stringify(msgs.slice(-MAX_SAVED))); } catch { /* sin almacenamiento */ }
-  }, [msgs, userKey]);
-
+  const cancelReply = () => {
+    if (timer.current !== null) window.clearTimeout(timer.current);
+    timer.current = null;
+  };
+  useEffect(() => cancelReply, []);
   useEffect(() => { box.current?.scrollTo({ top: box.current.scrollHeight, behavior: "smooth" }); }, [msgs, typing]);
   useEffect(() => { field.current?.focus(); }, []);
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  /** Ejecuta lo que el bot pidió hacer en la web. */
-  const run = (actions: BotAction[] = []) => {
-    for (const a of actions) {
-      if (a.type === "add") add(a.id, a.qty);
-      else if (a.type === "openCart") setCartOpen(true);
-      else if (a.type === "openAuth") setAuthOpen(true);
-      else if (a.type === "goShop") navigate("/tienda");
-      else if (a.type === "goHome") navigate("/");
-      else if (a.type === "goBooking") {
-        // Un instante para leer la respuesta antes de cerrar el chat y llevar al formulario.
-        window.setTimeout(() => {
-          onClose();
-          if (pathname !== "/") navigate("/");
-          window.setTimeout(() => go("cita"), pathname === "/" ? 150 : 700);
-        }, 900);
-      }
-    }
+  const run = (action?: BotAction) => {
+    if (!action) return;
+    onClose();
+    if (action === "openCart") setCartOpen(true);
+    else if (action === "openAuth") setAuthOpen(true);
+    else if (action === "goShop") navigate("/tienda");
+    else if (action === "goBooking") navigate("/#cita");
   };
-
-  const send = async (raw: string) => {
+  const saveMessages = (messages: Msg[]) => {
+    const next = messages.slice(-MAX_SAVED);
+    setMsgs(next);
+    // Guarda también la respuesta que abre otra sección y desmonta el chat.
+    setLocalStorageItem(storageKey(userKey), JSON.stringify(next));
+    return next;
+  };
+  const send = (raw: string) => {
     const text = raw.trim().slice(0, 300);
-    if (!text || typing) return;
-    const history = msgs.slice(-8).map(({ from, text: t }) => ({ from, text: t }));
-    setMsgs((m) => [...m, { id: crypto.randomUUID(), from: "me", text }]);
+    if (!text || timer.current !== null) return;
+    const reply = botReply(text, { products, userName: user?.name ?? null, bookings });
+    const conversation = saveMessages([...msgs, { id: crypto.randomUUID(), from: "me", text }]);
     setInput("");
     setChips([]);
     setTyping(true);
-    
-    const pause = new Promise((resolve) => setTimeout(resolve, 700));
-
-    let reply: BotReply = botReply(text, {
-      products, cart, total,
-      userName: user?.name ?? null,
-      bookings,
-    });
-    // Con API configurada, lo que el bot local no entiende se le pregunta al servidor.
-    if (reply.fallback && api.remote) {
-      const remote = await api.chat(text, history).catch(() => null);
-      if (remote && typeof remote.text === "string") reply = remote;
-    }
-
-        await pause;
-    setTyping(false);
-    setMsgs((m) => [...m, { id: crypto.randomUUID(), from: "bot", text: reply.text }]);
-    setChips(reply.chips ?? DEFAULT_CHIPS);
-    run(reply.actions);
+    timer.current = window.setTimeout(() => {
+      timer.current = null;
+      setTyping(false);
+      saveMessages([...conversation, { id: crypto.randomUUID(), from: "bot", text: reply.text }]);
+      setChips(reply.chips ?? DEFAULT_CHIPS);
+      run(reply.action);
+    }, 700);
   };
-
-  const submit = (e: FormEvent) => { e.preventDefault(); void send(input); };
-  const reset = () => { setMsgs([greeting(user?.name ?? null)]); setChips(DEFAULT_CHIPS); setInput(""); };
+  const submit = (event: FormEvent) => { event.preventDefault(); send(input); };
+  const reset = () => {
+    cancelReply();
+    setTyping(false);
+    saveMessages([greeting(user?.name ?? null)]);
+    setChips(DEFAULT_CHIPS);
+    setInput("");
+  };
 
   return (
     <section
@@ -151,7 +131,7 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
       {chips.length > 0 && !typing && (
         <div className="flex flex-wrap gap-2 px-4 pb-2">
           {chips.map((c) => (
-            <button key={c} onClick={() => void send(c)} className="rounded-full border px-3 py-1 text-xs transition-colors hover:border-primary hover:text-primary">
+            <button key={c} onClick={() => send(c)} className="rounded-full border px-3 py-1 text-xs transition-colors hover:border-primary hover:text-primary">
               {c}
             </button>
           ))}

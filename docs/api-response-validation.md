@@ -10,7 +10,6 @@ El cliente trata el JSON recibido como unknown y solo lo entrega a la interfaz d
 | POST /api/bookings | Reserva completa con id, pet, species, service, date y time. email y reason son strings opcionales. |
 | GET /api/bookings/availability | Objeto con date y unavailableSlots: array de horas HH:mm. La fecha debe coincidir con la solicitada. |
 | DELETE /api/bookings/{id} | HTTP 204 sin cuerpo. |
-| POST /api/chat | text no vacío; chips, actions y fallback opcionales. Solo se aceptan acciones conocidas y cantidades/IDs enteros positivos. |
 
 Las fechas de reserva usan YYYY-MM-DD y deben existir en el calendario. Las horas usan HH:mm de 00:00 a 23:59; una reserva de emergencia también puede usar Atención Inmediata. Ese texto no es una franja ordinaria válida en unavailableSlots. Las reglas de negocio, como disponibilidad y permisos, corresponden al backend.
 
@@ -21,3 +20,5 @@ Un JSON inválido o una respuesta con estructura incorrecta produce ApiError con
 Si un POST o DELETE responde con datos inválidos, la operación podría haberse realizado en el servidor. La interfaz pide comprobar su estado antes de repetirla; no se reintenta automáticamente.
 
 Estos cambios validan respuestas en el frontend. No implementan endpoints ni autenticación en el servidor.
+
+El chatbot Luma funciona localmente y no consulta /api/chat. Su antigua respuesta remota ya no forma parte del contrato del cliente.
