@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import { StoreProvider } from "@/lib/store";
 import { AuthModal } from "@/components/sections/Auth";
@@ -7,6 +8,8 @@ import { Mascot } from "@/components/animations/Mascot";
 import Home from "@/pages/Home";
 import Shop from "@/pages/Shop";
 
+const Species = lazy(() => import("@/pages/Species"));
+
 function Pages() {
   const { pathname } = useLocation();
   return (
@@ -14,6 +17,7 @@ function Pages() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/tienda" element={<Shop />} />
+        <Route path="/especies" element={<Suspense fallback={<p role="status" className="p-12">Cargando biblioteca animal…</p>}><Species /></Suspense>} />
       </Routes>
     </div>
   );

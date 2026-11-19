@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { go } from "@/lib/utils";
 
 import { Navbar } from "@/components/layout/Navbar";
@@ -8,7 +8,6 @@ import { Hero } from "@/components/sections/Hero";
 import { Marquee } from "@/components/sections/Marquee";
 import { About } from "@/components/sections/About";
 import { Services } from "@/components/sections/Services";
-import { AnimalLibrary } from "@/components/sections/AnimalLibrary";
 import { Stats } from "@/components/sections/Stats";
 import { Reviews } from "@/components/sections/Reviews";
 import { Booking } from "@/components/sections/Booking";
@@ -16,7 +15,8 @@ import { Visit } from "@/components/sections/Visit";
 
 export default function Home() {
   const { hash, key } = useLocation();
-  useEffect(() => { if (hash === "#cita" || hash === "#especies") go(hash.slice(1)); }, [hash, key]);
+  useEffect(() => { if (hash && hash !== "#especies") go(hash.slice(1)); else if (!hash) window.scrollTo({ top: 0, behavior: "instant" }); }, [hash, key]);
+  if (hash === "#especies") return <Navigate to="/especies" replace />;
   return (
     <>
       <Navbar />
@@ -27,7 +27,6 @@ export default function Home() {
         <Marquee />
         <About />
         <Services />
-        <AnimalLibrary />
         <Stats />
         <Visit />
         <Reviews />

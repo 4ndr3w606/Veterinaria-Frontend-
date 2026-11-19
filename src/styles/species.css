@@ -1,0 +1,64 @@
+/* Estilos exclusivos de la ruta /especies. */
+.species-page { --species-ease: cubic-bezier(.23,1,.32,1); background: var(--background); }
+.species-page__skip { position: fixed; top: 8px; left: 12px; z-index: 100; padding: 14px 20px; background: var(--primary); color: var(--primary-foreground); transform: translateY(-150%); }
+.species-page__skip:focus { transform: none; }
+.species-page__hero { background: var(--card); color: var(--foreground); padding: 144px 24px 32px; }
+.species-page__hero-inner { max-width: 1112px; margin: auto; display: grid; grid-template-columns: 1.1fr 1fr; gap: 40px; align-items: center; min-height: calc(100svh - 176px); }
+.species-page__eyebrow { font-size: 11px; letter-spacing: .15em; font-weight: 600; }
+.species-page__intro h1 { margin: 24px 0; font-size: clamp(52px,6.1vw,88px); font-weight: 300; line-height: .99; letter-spacing: -.055em; }
+.species-page__intro h1 em { color: var(--primary); font-weight: 300; }
+.species-page__intro > p:not(:first-child) { max-width: 390px; font-size: 16px; line-height: 1.8; color: var(--muted-foreground); }
+.species-page__button { display: inline-flex; gap: 24px; align-items: center; justify-content: space-between; min-height: 52px; padding: 14px 24px; margin-top: 28px; border: 1px solid currentColor; border-radius: 999px; font-size: 14px; transition: background-color 180ms, color 180ms, transform 180ms var(--species-ease); }
+.species-page__button:focus-visible { outline: 3px solid currentColor; outline-offset: 5px; }
+.species-page__portraits { display: grid; grid-template-columns: 1.2fr .8fr; gap: 16px; align-items: end; }
+.species-page__portrait { overflow: hidden; background: var(--secondary); }
+.species-page__portrait--dog { height: 480px; border-radius: 180px 180px 12px 12px; }
+.species-page__portrait--cat { height: 320px; border-radius: 100px 100px 12px 12px; }
+.species-page__portrait img { width: 100%; height: 100%; object-fit: cover; transition: transform 500ms var(--species-ease); }
+.species-page__index { grid-column: 1 / -1; display: flex; justify-content: space-between; gap: 16px; border-top: 1px solid var(--border); padding-top: 24px; font-size: 12px; color: var(--muted-foreground); }
+.species-page .animal-library { padding-block: 88px; background: var(--background); }
+.species-page .animal-library__filters { grid-template-columns: minmax(0,1fr) auto; align-items: end; }
+.species-page .animal-library__filters > button { height: 56px; }
+.species-page .animal-library__heading { border-bottom: 1px solid var(--border); padding-bottom: 32px; }
+.species-page .animal-library__photo { border-radius: 16px; }
+.species-page__closing { max-width: 1160px; margin: 0 auto; padding: 80px 24px 96px; border-top: 1px solid var(--border); text-align: center; }
+.species-page__closing h2 { margin-top: 28px; font-size: clamp(34px,4.5vw,62px); line-height: 1.12; letter-spacing: -.035em; font-weight: 300; }
+.species-page__closing h2 em { color: var(--primary); }
+.species-page__closing > p:not(:first-child) { max-width: 460px; margin: 24px auto 0; color: var(--muted-foreground); line-height: 1.8; }
+.species-page__photo-credit { max-width: 1112px; margin: 0 auto 24px; padding-inline: 24px; font-size: 12px; color: var(--muted-foreground); }
+@media (hover:hover) and (pointer:fine) {
+ .species-page__portrait:hover img { transform: scale(1.025); }
+ .species-page__button:hover { transform: translateY(-2px); background: var(--primary); color: var(--primary-foreground); }
+}
+.species-page__button:active { transform: scale(.98); }
+@media (max-width: 900px) {
+ .species-page__hero-inner { gap: 28px; }
+ .species-page__portrait--dog { height: 380px; }
+ .species-page__portrait--cat { height: 250px; }
+}
+@media (max-width: 640px) {
+ .species-page__hero { padding: 120px 20px 28px; }
+ .species-page__hero-inner { grid-template-columns: 1fr; min-height: auto; gap: 32px; }
+ .species-page__intro h1 { font-size: clamp(46px,12vw,68px); }
+ .species-page__portraits { gap: 12px; }
+ .species-page__portrait--dog { height: 290px; }
+ .species-page__portrait--cat { height: 220px; }
+ .species-page__index { flex-direction: column; gap: 12px; }
+ .species-page .animal-library { padding-block: 56px; }
+ .species-page .animal-library__filters { grid-template-columns: 1fr; }
+ .species-page__button { width: 100%; }
+ .species-page__closing { padding: 56px 20px; }
+}
+@media (prefers-reduced-motion:reduce) {
+ .species-page__button, .species-page__portrait img { transition: none; }
+ .species-page__button:hover, .species-page__button:active, .species-page__portrait:hover img { transform: none; }
+}
+
+/* Navegación con fondo estable para mantener el contraste. */
+.species-page header nav { background: var(--background); }
+.species-page__skip:focus-visible { outline: 3px solid var(--foreground); outline-offset: 3px; }
+
+.species-page__hero .species-page__button { color: var(--primary); }
+@media (hover:hover) and (pointer:fine) {
+ .species-page__hero .species-page__button:hover { color: var(--primary-foreground); }
+}

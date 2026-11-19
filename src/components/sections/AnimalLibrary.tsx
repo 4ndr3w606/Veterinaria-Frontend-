@@ -26,7 +26,7 @@ export function AnimalLibrary() {
       <div className="animal-library__heading">
         <div>
           <p className="animal-library__eyebrow"><BookOpen size={17} aria-hidden="true" /> Biblioteca animal</p>
-          <h2 id="animal-library-title">Cada especie,<br /><em>un mundo.</em></h2>
+          <h2 id="animal-library-title">Explora la<br /><em>biblioteca.</em></h2>
         </div>
         <div className="animal-library__intro">
           <p>Conoce especies y razas, desde los compañeros de siempre hasta los que despiertan tu curiosidad.</p>

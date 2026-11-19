@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ArrowUpRight, Menu, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +17,12 @@ import { AccountBar } from "@/components/layout/AccountBar";
 
 export function Navbar() {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const visit = (id: string) => {
+    if (id === "especies") navigate("/especies");
+    else if (pathname !== "/") navigate(id === "inicio" ? "/" : `/#${id}`);
+    else go(id);
+  };
   const toShop = () => navigate("/tienda");
 
   return (
@@ -24,7 +30,7 @@ export function Navbar() {
       {/* Fila: [barra de navegación] [iconos de acciones] */}
       <div className="mx-auto flex max-w-6xl items-center gap-2 sm:gap-3">
         <nav aria-label="Navegación principal" className="flex min-w-0 flex-1 items-center justify-between gap-2 rounded-full border bg-background/70 py-3 pr-2 pl-3 text-lg backdrop-blur-xl sm:pr-3 sm:pl-5">
-          <button type="button" className="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50" onClick={() => go("inicio")} aria-label="Volver al inicio">
+          <button type="button" className="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50" onClick={() => visit("inicio")} aria-label="Volver al inicio">
             <Logo compactOnMobile />
           </button>
 
@@ -35,7 +41,7 @@ export function Navbar() {
                 key={id}
                 variant="ghost"
                 className="rounded-full px-3 text-base text-muted-foreground hover:text-primary"
-                onClick={() => go(id)}
+                onClick={() => visit(id)}
               >
                 {label}
               </Button>
@@ -45,7 +51,7 @@ export function Navbar() {
           <div className="flex items-center gap-2">
             <span className="hidden lg:block">
               <Magnetic>
-                <Button className="rounded-full" onClick={() => go("cita")}>
+                <Button className="rounded-full" onClick={() => visit("cita")}>
                   Reserva una visita <ArrowUpRight />
                 </Button>
               </Magnetic>
@@ -66,7 +72,7 @@ export function Navbar() {
                   <SheetClose
                     key={id}
                     render={
-                      <Button variant="ghost" className="justify-start text-base md:text-lg" onClick={() => go(id)}>
+                      <Button variant="ghost" className="justify-start text-base md:text-lg" onClick={() => visit(id)}>
                         {label}
                       </Button>
                     }
@@ -81,7 +87,7 @@ export function Navbar() {
                 />
                 <SheetClose
                   render={
-                    <Button variant="ghost" className="justify-start text-base md:text-lg" onClick={() => go("cita")}>
+                    <Button variant="ghost" className="justify-start text-base md:text-lg" onClick={() => visit("cita")}>
                       Reservar cita
                     </Button>
                   }

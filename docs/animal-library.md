@@ -1,6 +1,8 @@
 # Biblioteca animal: búsqueda abierta desde el frontend
 
-La sección está después de Servicios, con acceso «Especies» en el menú y mediante `/#especies`.
+La biblioteca vive en la página independiente `/especies`, accesible desde el menú. El enlace anterior `/#especies` redirige a la nueva página. La ruta se carga de forma diferida y la biblioteca ya no se monta en Inicio.
+
+La portada reutiliza fotografías de Unsplash ya empleadas en el sitio, con espacio reservado para evitar saltos. Las animaciones GSAP de entrada y cierre usan transformaciones y opacidad, se limpian al salir y respetan movimiento reducido. No se añaden dependencias ni bucles permanentes.
 
 ## Consultar un animal
 
@@ -89,3 +91,10 @@ Se comprobó el filtro desde el navegador integrado con la API real: «jaguar» 
 Las primeras comprobaciones de red desde Node recibieron respuestas HTTP 429; se respetó la espera antes de continuar. La verificación final del flujo se realizó desde el navegador. No se repitió la matriz de tamaños móviles ni el comprobador externo del kit de diseño; el diseño y las animaciones se mantienen.
 
 Los cambios son locales; no se creó un backend ni se hicieron commits o envíos a GitHub.
+
+
+## Página independiente
+
+La migración a `/especies` conserva la búsqueda en título y contenido y el filtro Wikidata. Se verificaron la navegación, el enlace antiguo y la vista móvil. La revisión de diseño y sus límites están en [species-design-review.md](./species-design-review.md).
+
+La portada de Especies utiliza el verde de `--card`, texto `--foreground` y acentos `--primary`, compartidos con el resto de Lúmina. Sustituye al fondo crema inicial.
