@@ -34,7 +34,7 @@ export function Navbar() {
               <Button
                 key={id}
                 variant="ghost"
-                className="rounded-full px-4 text-base text-muted-foreground hover:text-primary md:text-lg"
+                className="rounded-full px-3 text-base text-muted-foreground hover:text-primary"
                 onClick={() => go(id)}
               >
                 {label}

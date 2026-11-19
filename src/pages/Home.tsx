@@ -8,6 +8,7 @@ import { Hero } from "@/components/sections/Hero";
 import { Marquee } from "@/components/sections/Marquee";
 import { About } from "@/components/sections/About";
 import { Services } from "@/components/sections/Services";
+import { AnimalLibrary } from "@/components/sections/AnimalLibrary";
 import { Stats } from "@/components/sections/Stats";
 import { Reviews } from "@/components/sections/Reviews";
 import { Booking } from "@/components/sections/Booking";
@@ -15,7 +16,7 @@ import { Visit } from "@/components/sections/Visit";
 
 export default function Home() {
   const { hash, key } = useLocation();
-  useEffect(() => { if (hash === "#cita") go("cita"); }, [hash, key]);
+  useEffect(() => { if (hash === "#cita" || hash === "#especies") go(hash.slice(1)); }, [hash, key]);
   return (
     <>
       <Navbar />
@@ -26,6 +27,7 @@ export default function Home() {
         <Marquee />
         <About />
         <Services />
+        <AnimalLibrary />
         <Stats />
         <Visit />
         <Reviews />

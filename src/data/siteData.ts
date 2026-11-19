@@ -3,6 +3,7 @@ import { Stethoscope, HeartPulse, ShieldCheck } from "lucide-react";
 export const links = [
   ["Nuestra esencia", "nosotros"],
   ["Servicios", "servicios"],
+  ["Especies", "especies"],
   ["Tu visita", "visita"],
   ["Historias", "historias"],
 ] as const;
