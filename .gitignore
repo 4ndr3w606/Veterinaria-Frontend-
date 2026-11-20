@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 
 .taste-skill/
+
+# Datos generados por la API de ejemplo
+server/data/

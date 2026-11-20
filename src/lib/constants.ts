@@ -1,5 +1,7 @@
 /** Envío gratis a partir de este valor (COP). */
 export const FREE_SHIPPING = 150000;
+/** Costo de envío a domicilio por debajo de FREE_SHIPPING (COP). Valor de demostración: el backend tendrá la última palabra. */
+export const SHIPPING_COST = 12000;
 
 export const SERVICES = ["Consulta", "Vacunación", "Baño y corte", "Desparasitación"];
 export const SLOTS = ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00", "17:00"];

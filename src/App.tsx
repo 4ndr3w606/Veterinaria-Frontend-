@@ -9,6 +9,7 @@ import Home from "@/pages/Home";
 import Shop from "@/pages/Shop";
 
 const Species = lazy(() => import("@/pages/Species"));
+const Checkout = lazy(() => import("@/pages/Checkout"));
 
 function Pages() {
   const { pathname } = useLocation();
@@ -18,6 +19,7 @@ function Pages() {
         <Route path="/" element={<Home />} />
         <Route path="/tienda" element={<Shop />} />
         <Route path="/especies" element={<Suspense fallback={<p role="status" className="p-12">Cargando biblioteca animal…</p>}><Species /></Suspense>} />
+        <Route path="/finalizar-compra" element={<Suspense fallback={<p role="status" className="p-12">Cargando el formulario de compra…</p>}><Checkout /></Suspense>} />
       </Routes>
     </div>
   );

@@ -1,3 +1,5 @@
+import type { OrderDetails } from "@/lib/checkout";
+
 export type Pet = "Perro" | "Gato" | "Todos";
 
 export type Product = {
@@ -24,8 +26,11 @@ export type User = Pick<Account, "name" | "email">;
 export type Cart = Record<number, number>;
 
 export type OrderLine = { id: number; qty: number };
-/** El cliente solo envía ids y cantidades; el total lo calcula el servidor. */
-export type OrderInput = { email: string | null; items: OrderLine[] };
+/**
+ * El cliente envía ids, cantidades y los datos de entrega; el total (productos + envío) lo calcula el servidor.
+ * `email` es la cuenta que compra (null para invitados); el correo de contacto va en `customer`.
+ */
+export type OrderInput = { email: string | null; items: OrderLine[] } & OrderDetails;
 export type OrderResult = { id: string; total: number; createdAt: string };
 
 /** Luma solo abre secciones; no modifica compras ni reservas. */

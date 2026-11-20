@@ -1,6 +1,6 @@
 /** Guía local: información, búsqueda y consulta. Las compras y reservas se hacen en sus formularios. */
 import type { Booking, BotReply, Product } from "./types";
-import { FREE_SHIPPING, SERVICES, SLOTS, money } from "./constants.ts";
+import { FREE_SHIPPING, SERVICES, SHIPPING_COST, SLOTS, money } from "./constants.ts";
 
 export type BotCtx = {
   products: Product[];
@@ -61,7 +61,7 @@ export function botReply(input: string, ctx: BotCtx): BotReply {
     return { text: "En tu carrito puedes revisar los productos, las cantidades y el total.", action: "openCart" };
   }
   if (/envio|domicilio|despacho|entrega/.test(text)) {
-    return { text: `El envío es gratis en pedidos desde ${money(FREE_SHIPPING)}. El costo para pedidos menores aún no está definido en esta versión.`, chips: ["Ver la tienda", "Mi carrito"] };
+    return { text: `El envío es gratis en pedidos desde ${money(FREE_SHIPPING)}. Para pedidos menores cuesta ${money(SHIPPING_COST)}, y también puedes recogerlo gratis en la clínica. Los datos de entrega se piden al finalizar la compra.`, chips: ["Ver la tienda", "Mi carrito"] };
   }
   if (/servicio|vacun|desparasit|bano|corte|peluquer|chequeo|que hacen|que ofrecen/.test(text) && !/shampoo|cepillo/.test(text)) {
     return { text: `Servicios disponibles:\n${[...SERVICES, "Emergencia"].map((service) => `• ${service}`).join("\n")}`, chips: ["Agendar una cita", "Horarios"] };

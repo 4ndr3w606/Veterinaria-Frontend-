@@ -55,4 +55,4 @@ El chat cabe a 320 × 740 px: de x=12 a x=308 y de y=116 a y=628. La carga limpi
 | tests/chat.test.mjs | Pruebas de búsqueda, citas, destinos y límites del asistente. |
 | docs/api-response-validation.md | Contratos de API actualizados. |
 
-La modificación corresponde al frontend. El servidor de ejemplo puede conservar su endpoint heredado /api/chat, pero Luma ya no lo utiliza. La lógica de sincronización y validación de reservas conserva su funcionamiento.
+La modificación corresponde al frontend. El servidor de ejemplo ya no expone el endpoint heredado /api/chat, porque Luma no lo utiliza. La lógica de sincronización y validación de reservas conserva su funcionamiento.

@@ -61,8 +61,43 @@ function limit(req) {
 }
 
 // ---------- Pedidos ----------
+// Mismos valores que src/lib/constants.ts (FREE_SHIPPING y SHIPPING_COST). BD: muévelos a la configuración del servidor.
+const FREE_SHIPPING = 150000;
+const SHIPPING_COST = 12000;
+const DELIVERY = ["domicilio", "recoger"];
+const PAYMENT = ["contraentrega", "tarjeta", "pse"];
+
+const str = (value, max) => (typeof value === "string" ? value.trim().slice(0, max) : "");
+
+// Validación mínima: el formulario del frontend ya valida formatos, pero el servidor nunca debe confiar en el navegador.
+function readDetails(body) {
+  const c = body.customer ?? {};
+  const customer = {
+    name: str(c.name, 80), email: str(c.email, 120), phone: str(c.phone, 10),
+    docType: str(c.docType, 3), docNumber: str(c.docNumber, 12),
+  };
+  if (!customer.name || !customer.email.includes("@") || !/^3\d{9}$/.test(customer.phone) || !customer.docNumber) {
+    throw new HttpError(400, "Faltan datos de contacto válidos");
+  }
+  const d = body.delivery ?? {};
+  if (!DELIVERY.includes(d.method)) throw new HttpError(400, "Método de entrega inválido");
+  const delivery = { method: d.method, notes: str(d.notes, 200) || undefined };
+  if (d.method === "domicilio") {
+    Object.assign(delivery, {
+      department: str(d.department, 40), city: str(d.city, 60), address: str(d.address, 100),
+      neighborhood: str(d.neighborhood, 60), addressExtra: str(d.addressExtra, 60) || undefined,
+    });
+    if (!delivery.department || !delivery.city || !delivery.address || !delivery.neighborhood) {
+      throw new HttpError(400, "Faltan datos de la dirección de entrega");
+    }
+  }
+  if (!PAYMENT.includes(body.payment)) throw new HttpError(400, "Método de pago inválido");
+  return { customer, delivery, payment: body.payment };
+}
+
 function createOrder(body) {
   const email = body.email == null ? null : String(body.email).trim().slice(0, 200);
+  const details = readDetails(body);
   if (!Array.isArray(body.items) || body.items.length < 1 || body.items.length > 50) {
     throw new HttpError(400, "El pedido debe tener entre 1 y 50 productos");
   }
@@ -76,36 +111,12 @@ function createOrder(body) {
     total += product.price * qty;
     return { id: product.id, name: product.name, price: product.price, qty };
   });
-  const order = { id: randomUUID().slice(0, 8).toUpperCase(), email, items: lines, total, createdAt: new Date().toISOString() };
+  const shipping = details.delivery.method === "recoger" || total >= FREE_SHIPPING ? 0 : SHIPPING_COST;
+  total += shipping;
+  const order = { id: randomUUID().slice(0, 8).toUpperCase(), email, items: lines, shipping, total, ...details, createdAt: new Date().toISOString() };
   orders.push(order);
   saveOrders();
   return { id: order.id, total: order.total, createdAt: order.createdAt };
-}
-
-// ---------- Chat ----------
-// Punto de extensión: aquí puedes llamar a un modelo de IA. Guarda la clave en process.env (por ejemplo
-// en un .env del SERVIDOR) y nunca en el frontend: todo lo que está en src/ lo puede leer cualquier visitante.
-async function answer(message) {
-  const t = norm(message);
-  if (/emergencia|urgente|envenen|atropell|sangr|convuls|no respira/.test(t)) {
-    return {
-      text: "Si tu mascota está en peligro, llévala ya a la clínica veterinaria más cercana. En el formulario de citas puedes elegir «Emergencia» para atención inmediata.",
-      chips: ["Agendar una cita", "Horarios"],
-    };
-  }
-  if (/horario|abren|cierran|atienden/.test(t)) {
-    return { text: "Atendemos de lunes a sábado. El horario exacto aún está por confirmar; las citas se reservan en franjas de 9:00 a 17:00." };
-  }
-  if (/cita|reserv|agendar/.test(t)) {
-    return { text: "Puedes reservar tu cita en el formulario de la página de inicio. Elige servicio, día y hora.", actions: [{ type: "goBooking" }] };
-  }
-  if (/tienda|producto|comprar|catalogo/.test(t)) {
-    return { text: "Tenemos alimento, juguetes, descanso, paseo, higiene y salud. Te llevo a la tienda.", actions: [{ type: "goShop" }] };
-  }
-  return {
-    text: "Puedo ayudarte con citas, horarios, servicios y la tienda. ¿Qué necesitas?",
-    chips: ["Agendar una cita", "Horarios", "Ver la tienda"],
-  };
 }
 
 // ---------- Rutas ----------
@@ -151,14 +162,6 @@ const server = createServer(async (req, res) => {
     if (req.method === "POST" && path === "/api/orders") {
       limit(req);
       return send(res, 201, createOrder(await readJson(req)));
-    }
-
-    if (req.method === "POST" && path === "/api/chat") {
-      limit(req);
-      const body = await readJson(req);
-      const message = String(body.message ?? "").trim().slice(0, 500);
-      if (!message) throw new HttpError(400, "Falta el mensaje");
-      return send(res, 200, await answer(message));
     }
 
     throw new HttpError(404, "No encontrado");

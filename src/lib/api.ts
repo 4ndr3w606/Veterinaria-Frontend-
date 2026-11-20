@@ -15,6 +15,7 @@ import {
   isProductsResponse,
   isRecord,
 } from "@/lib/apiValidation";
+import { shippingCost } from "@/lib/checkout";
 import { EMERGENCY_TIME } from "@/lib/constants";
 import { getLocalStorageItem, setLocalStorageItem } from "@/lib/safeStorage";
 import type {
@@ -130,18 +131,21 @@ export const api = {
   async createOrder(order: OrderInput): Promise<OrderResult> {
     if (BASE) return http("/api/orders", isOrderResult, { method: "POST", body: JSON.stringify(order) });
 
-    const total = order.items.reduce(
+    // Simulación: una breve espera imita la latencia de red y del procesamiento del pago.
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+    const subtotal = order.items.reduce(
       (sum, line) => sum + (catalog.find((product) => product.id === line.id)?.price ?? 0) * line.qty,
       0,
     );
     const result: OrderResult = {
       id: crypto.randomUUID().slice(0, 8).toUpperCase(),
-      total,
+      total: subtotal + shippingCost(subtotal, order.delivery.method),
       createdAt: new Date().toISOString(),
     };
     try {
       const list = JSON.parse(getLocalStorageItem("lumina:orders") ?? "[]") as unknown[];
-      list.push({ ...result, ...order });
+      // No se guardan nombre, documento, teléfono ni dirección en el navegador: solo el resumen del pedido.
+      list.push({ ...result, email: order.email, items: order.items, delivery: order.delivery.method, payment: order.payment });
       setLocalStorageItem("lumina:orders", JSON.stringify(list));
     } catch {
       // El pedido de demostración se acepta aunque el navegador no permita persistirlo.

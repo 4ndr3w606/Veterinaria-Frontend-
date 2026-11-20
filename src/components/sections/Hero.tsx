@@ -17,7 +17,7 @@ function HeroTitle() {
   const n = useTyped(L1.length + L2.length);
   const n2 = Math.max(0, n - L1.length);
   return (
-    <h1 aria-label={`${L1} ${L2}`} className="text-[clamp(3.2rem,9vw,7.5rem)] leading-[0.95] font-light tracking-tighter">
+    <h1 aria-label={`${L1} ${L2}`} className="text-[clamp(2.75rem,9vw,7.5rem)] leading-[0.95] font-light tracking-tighter">
             <span aria-hidden="true">
               <span>{L1.slice(0, n)}<span className="opacity-0">{L1.slice(n)}</span>{n < L1.length && <i className="caret" />}</span>
               <br />
@@ -52,9 +52,9 @@ export function Hero() {
         <PawPrint key={p.id} onAnimationEnd={() => setPaws((current) => current.filter((paw) => paw.id !== p.id))} className="paw-trail size-7" style={vars({ left: p.x, top: p.y, "--r": `${p.r}deg` })} />
       ))}
 
-      <div className="relative z-10 mx-auto grid min-h-svh max-w-6xl items-center gap-12 px-5 pt-32 pb-16 lg:grid-cols-[1.1fr_0.9fr]">
+      <div className="relative z-10 mx-auto grid min-h-svh max-w-6xl grid-cols-[minmax(0,1fr)] items-center gap-12 px-5 pt-32 pb-16 lg:grid-cols-[1.1fr_0.9fr]">
         <div>
-          <Badge variant="outline" className="enter mb-6 gap-3 rounded-full px-6 py-4 text-lg text-muted-foreground" style={vars({ "--i": 0 })}>
+          <Badge variant="outline" className="enter mb-6 gap-3 rounded-full px-4 py-4 text-base text-muted-foreground sm:px-6 sm:text-lg" style={vars({ "--i": 0 })}>
             <span className="size-3 rounded-full bg-primary" /> Un lugar para sentirse en casa
           </Badge>
 

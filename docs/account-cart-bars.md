@@ -30,4 +30,4 @@ Las verificaciones de interfaz se hicieron manualmente en el navegador local. Se
 
 ## Hallazgo separado
 
-El contenido principal de Inicio todavía desborda horizontalmente a 320 px. Las barras de cabecera quedan dentro de la pantalla; el ajuste del resto del contenido móvil queda pendiente.
+El contenido principal de Inicio desbordaba horizontalmente a 320 px. Resuelto en `src/components/sections/Hero.tsx`: la columna de la cuadrícula usa `minmax(0, 1fr)` en móvil, el título baja su tamaño mínimo a 2.75rem y la etiqueta superior reduce su tamaño por debajo de `sm`. Verificado en Inicio, Tienda y Especies a 320, 375, 768 y 1280 px sin elementos fuera de pantalla.
