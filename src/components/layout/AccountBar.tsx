@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
-import { LogOut, ShoppingCart, UserRound } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Link, useLocation } from "react-router-dom";
+import { ShoppingCart, UserRound } from "lucide-react";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { useStore } from "@/lib/store";
 
 type AccountBarProps = {
@@ -10,9 +11,11 @@ type AccountBarProps = {
 
 /** Una instancia en la cabecera de cada ruta; comparte cuenta, contador y destino del carrito. */
 export function AccountBar({ children, showGreeting = false }: AccountBarProps) {
-  const { user, logout, authOpen, cartOpen, setAuthOpen, setCartOpen, count } = useStore();
+  const { user, authOpen, cartOpen, setAuthOpen, setCartOpen, count } = useStore();
+  const { pathname } = useLocation();
   const firstName = user?.name.trim().split(/\s+/)[0];
-  const accountLabel = user ? "Cerrar sesión de " + user.name : "Entrar";
+  const initials = user?.name.trim().split(/\s+/).slice(0, 2).map((word) => word[0]?.toUpperCase()).join("");
+  const accountLabel = user ? "Mi cuenta de " + user.name : "Entrar";
   const cartLabel = "Carrito, " + count + (count === 1 ? " producto" : " productos");
 
   return (
@@ -27,19 +30,32 @@ export function AccountBar({ children, showGreeting = false }: AccountBarProps) 
           Hola, <span className="font-display italic text-primary">{firstName}</span>
         </span>
       )}
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        className="size-11 rounded-full"
-        title={accountLabel}
-        aria-label={accountLabel}
-        aria-haspopup={user ? undefined : "dialog"}
-        aria-expanded={user ? undefined : authOpen}
-        onClick={() => (user ? logout() : setAuthOpen(true))}
-      >
-        {user ? <LogOut className="size-5" aria-hidden="true" /> : <UserRound className="size-5" aria-hidden="true" />}
-      </Button>
+      {user ? (
+        // Con sesión, el botón lleva a «Mi cuenta»; cerrar sesión se hace desde esa página.
+        <Link
+          to="/mi-cuenta"
+          title={accountLabel}
+          aria-label={accountLabel}
+          aria-current={pathname === "/mi-cuenta" ? "page" : undefined}
+          className={buttonVariants({ variant: "ghost", size: "icon", className: "size-11 rounded-full aria-[current=page]:bg-muted" })}
+        >
+          <span className="flex size-7 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground" aria-hidden="true">{initials}</span>
+        </Link>
+      ) : (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-11 rounded-full"
+          title={accountLabel}
+          aria-label={accountLabel}
+          aria-haspopup="dialog"
+          aria-expanded={authOpen}
+          onClick={() => setAuthOpen(true)}
+        >
+          <UserRound className="size-5" aria-hidden="true" />
+        </Button>
+      )}
       <Button
         type="button"
         variant="secondary"

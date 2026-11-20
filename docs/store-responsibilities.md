@@ -4,7 +4,7 @@ StoreProvider compone los hooks, conecta los cambios de sesión con las reservas
 
 | Módulo | Responsabilidad |
 | --- | --- |
-| src/lib/store/useAuth.ts | Cuentas de demostración en memoria, normalización del correo, registro, acceso y salida. Notifica los cambios de sesión mediante un callback. |
+| src/lib/store/useAuth.ts | Cuentas de demostración en memoria, normalización del correo, registro, acceso y salida. Recuerda la sesión (nombre y correo, sin contraseña) en `sessionStorage` bajo `lumina:session` y la restaura al recargar. Notifica los cambios de sesión mediante un callback, también al restaurarla. |
 | src/lib/store/useCatalog.ts | Catálogo inicial, carga desde la API, estado de carga y catálogo local ante un fallo. |
 | src/lib/store/useCart.ts | Carrito por cuenta o invitado, persistencia, cantidades, totales y envío de pedidos con los datos del formulario de compra (`checkout(details)`). |
 | src/lib/store/useWishes.ts | Favoritos por cuenta o invitado y persistencia. |

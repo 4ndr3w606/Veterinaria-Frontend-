@@ -6,7 +6,7 @@ Inicio y Tienda ya compartían el estado de StoreProvider, pero tenían dos impl
 
 ## Cambios
 
-- `src/components/layout/AccountBar.tsx`: componente compartido para entrar, cerrar sesión y abrir el carrito. Botones de 44 px, etiquetas accesibles con el número exacto de productos y contador visual limitado a `99+`. Permite añadir el enlace de Tienda y mostrar el saludo donde corresponde.
+- `src/components/layout/AccountBar.tsx`: componente compartido para entrar, ir a «Mi cuenta» y abrir el carrito (cerrar sesión se hace desde `/mi-cuenta`; ver [account.md](account.md)). Botones de 44 px, etiquetas accesibles con el número exacto de productos y contador visual limitado a `99+`. Permite añadir el enlace de Tienda y mostrar el saludo donde corresponde.
 - `src/components/layout/Navbar.tsx`: utiliza AccountBar; ajusta los espacios y los puntos de cambio del menú para que la navegación y las acciones quepan en la cabecera.
 - `src/components/layout/Logo.tsx`: permite mostrar solo el símbolo en la cabecera móvil. El texto completo sigue disponible en otros usos del logo.
 - `src/pages/Shop.tsx`: utiliza el mismo AccountBar, con saludo en pantallas amplias. Los nombres largos se recortan visualmente.

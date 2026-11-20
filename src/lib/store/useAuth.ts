@@ -1,19 +1,50 @@
-import { useEffect, useState } from "react";
-import { removeLocalStorageItem } from "@/lib/safeStorage";
+import { useEffect, useRef, useState } from "react";
+import {
+  getSessionStorageItem,
+  removeLocalStorageItem,
+  removeSessionStorageItem,
+  setSessionStorageItem,
+} from "@/lib/safeStorage";
 import type { Account, User } from "@/lib/types";
 
+const SESSION_KEY = "lumina:session";
+
+/**
+ * Sesión recordada en sessionStorage: solo nombre y correo, nunca la contraseña.
+ * Sobrevive a recargar la pestaña y desaparece al cerrarla.
+ */
+function readSession(): User | null {
+  try {
+    const value: unknown = JSON.parse(getSessionStorageItem(SESSION_KEY) ?? "null");
+    if (typeof value !== "object" || value === null) return null;
+    const { name, email } = value as Record<string, unknown>;
+    if (typeof name !== "string" || !name.trim() || typeof email !== "string" || !email.includes("@")) return null;
+    return { name: name.trim(), email: email.trim().toLowerCase() };
+  } catch {
+    return null;
+  }
+}
+
 export function useAuth(onSessionChange: (email: string | null) => void) {
-  // Demo en memoria: la autenticación real se conectará aquí.
+  // Demo: las cuentas (con contraseña) viven solo en memoria; la autenticación real se conectará aquí.
   const [accounts, setAccounts] = useState<Account[]>([]);
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(readSession);
+  const restored = useRef(user);
 
   useEffect(() => {
     removeLocalStorageItem("lumina:accounts");
     removeLocalStorageItem("lumina:user");
   }, []);
 
+  // Una sesión recuperada al recargar también debe cargar las citas de esa cuenta.
+  useEffect(() => {
+    if (restored.current) onSessionChange(restored.current.email);
+  }, [onSessionChange]);
+
   function startSession(account: Account) {
-    setUser({ name: account.name, email: account.email });
+    const next = { name: account.name, email: account.email };
+    setUser(next);
+    setSessionStorageItem(SESSION_KEY, JSON.stringify(next));
     onSessionChange(account.email);
   }
 
@@ -38,6 +69,7 @@ export function useAuth(onSessionChange: (email: string | null) => void) {
   }
 
   function logout() {
+    removeSessionStorageItem(SESSION_KEY);
     onSessionChange(null);
     setUser(null);
   }

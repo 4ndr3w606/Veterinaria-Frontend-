@@ -34,4 +34,4 @@ Los pedidos se guardan en `server/data/orders.json` (carpeta ignorada por git).
 - Define `CORS_ORIGIN` con el dominio de tu web (varios, separados por coma).
 - Cualquier clave secreta (por ejemplo, de un modelo de IA) va en variables de entorno **del servidor**; nunca la pongas
   en `src/` ni en un `VITE_...`, porque cualquiera puede leerla desde el navegador.
-- Las cuentas siguen siendo de demostración (en memoria del navegador; se pierden al recargar). Antes de publicar, la autenticación debe pasar al servidor.
+- Las cuentas siguen siendo de demostración (en memoria del navegador; solo la sesión iniciada, sin contraseña, sobrevive a recargar la pestaña). Antes de publicar, la autenticación debe pasar al servidor.

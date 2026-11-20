@@ -1,4 +1,4 @@
-import type { OrderDetails } from "@/lib/checkout";
+import type { DeliveryMethod, OrderDetails, PaymentMethod } from "@/lib/checkout";
 
 export type Pet = "Perro" | "Gato" | "Todos";
 
@@ -32,6 +32,12 @@ export type OrderLine = { id: number; qty: number };
  */
 export type OrderInput = { email: string | null; items: OrderLine[] } & OrderDetails;
 export type OrderResult = { id: string; total: number; createdAt: string };
+/** Pedido tal como aparece en «Mi cuenta». Sin datos personales: solo el resumen. */
+export type OrderRecord = OrderResult & {
+  items: OrderLine[];
+  delivery: DeliveryMethod;
+  payment: PaymentMethod;
+};
 
 /** Luma solo abre secciones; no modifica compras ni reservas. */
 export type BotAction = "openCart" | "openAuth" | "goShop" | "goBooking";

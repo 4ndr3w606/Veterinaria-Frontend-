@@ -10,6 +10,7 @@ biblioteca de especies basada en Wikipedia y un asistente virtual (Luma).
 | `/` | Inicio: presentación, servicios, estadísticas, ubicación, reseñas, preguntas frecuentes y formulario de citas (incluye la opción de emergencia). |
 | `/tienda` | Catálogo con filtros, vista rápida, favoritos y carrito. |
 | `/finalizar-compra` | Formulario de compra simulado: datos de contacto, entrega (domicilio o recogida), método de pago y confirmación ([detalles](docs/checkout.md)). |
+| `/mi-cuenta` | Información del usuario, compras realizadas e historial de citas de la cuenta ([detalles](docs/account.md)). |
 | `/especies` | Buscador de animales en Wikipedia en español, con fotografía y créditos de Wikimedia Commons. |
 
 En todas las páginas están disponibles Luma, el acceso a la cuenta y el carrito.
@@ -58,7 +59,7 @@ pero **no** los endpoints de reservas; su contrato está en [docs/booking-api-co
 
 Limitaciones actuales:
 
-- Las cuentas son de demostración: viven en memoria del navegador y se pierden al recargar.
+- Las cuentas son de demostración: viven en memoria del navegador. La sesión iniciada (solo nombre y correo, nunca la contraseña) se recuerda en `sessionStorage`, así que sobrevive a recargar la pestaña pero no a cerrarla. Tras cerrar sesión y recargar, hay que volver a crear la cuenta; el carrito, los pedidos y las citas se recuperan con el mismo correo.
 - La compra es simulada: no hay pasarela de pagos ni cobros. El costo de envío ($12.000) es un valor de demostración.
 - Luma responde con reglas locales (`src/lib/bot.ts`); no usa ningún servicio externo ni modelo de IA.
 
@@ -66,12 +67,13 @@ Limitaciones actuales:
 
 ```
 src/
-  pages/            Páginas de cada ruta (Home, Shop, Checkout, Species)
+  pages/            Páginas de cada ruta (Home, Shop, Checkout, Account, Species)
   components/
     sections/       Bloques de la página de inicio, autenticación y carrito
     shop/           Piezas de la tienda
     animals/        Biblioteca de especies
     checkout/       Campos, resumen y confirmación del formulario de compra
+    account/        Paneles de perfil, compras y citas de «Mi cuenta»
     chat/           Panel de Luma
     animations/     Efectos reutilizables
     layout/         Navbar, Footer, Logo y barra de cuenta
@@ -82,17 +84,19 @@ src/
     api.ts          Cliente HTTP y modo local
     apiValidation.ts Validación de las respuestas de la API
     checkout.ts     Validación y reglas del formulario de compra
+    account.ts      Estados simulados de pedidos, citas y mascotas de «Mi cuenta»
     bot.ts          Lógica de Luma
     wikipedia.ts    Búsqueda y fichas de Wikipedia
   data/             Catálogo de productos, especies sugeridas y textos del sitio
 server/             API de ejemplo sin dependencias
-tests/              Tests de Luma, del formulario de compra y de la integración con Wikipedia
+tests/              Tests de Luma, del formulario de compra, de «Mi cuenta» y de la integración con Wikipedia
 docs/               Decisiones de diseño y contratos de la API
 ```
 
 ## Documentación
 
 - [Formulario de compra](docs/checkout.md)
+- [Mi cuenta](docs/account.md)
 - [Contrato de reservas](docs/booking-api-contract.md)
 - [Validación de respuestas de la API](docs/api-response-validation.md)
 - [Responsabilidades del store](docs/store-responsibilities.md)

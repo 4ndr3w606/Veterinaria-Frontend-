@@ -1,5 +1,5 @@
 import { EMERGENCY_TIME } from "@/lib/constants";
-import type { Booking, BookingAvailability, OrderResult, Product } from "@/lib/types";
+import type { Booking, BookingAvailability, OrderRecord, OrderResult, Product } from "@/lib/types";
 
 export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -81,6 +81,22 @@ export function isOrderResult(value: unknown): value is OrderResult {
     isText(value.id) &&
     isAmount(value.total) &&
     isTimestamp(value.createdAt);
+}
+
+function isOrderRecord(value: unknown): value is OrderRecord {
+  if (!isRecord(value) || !isOrderResult(value)) return false;
+  const order: Record<string, unknown> = value;
+  return Array.isArray(order.items) &&
+    order.items.every((line: unknown) => isRecord(line) && isPositiveInteger(line.id) && isPositiveInteger(line.qty)) &&
+    (order.delivery === "domicilio" || order.delivery === "recoger") &&
+    (order.payment === "contraentrega" || order.payment === "tarjeta" || order.payment === "pse");
+}
+
+export function isOrdersResponse(value: unknown): value is { orders: OrderRecord[] } {
+  return isRecord(value) &&
+    Array.isArray(value.orders) &&
+    value.orders.every(isOrderRecord) &&
+    new Set(value.orders.map((order) => order.id)).size === value.orders.length;
 }
 
 export const isEmptyResponse = (value: unknown): value is undefined => value === undefined;

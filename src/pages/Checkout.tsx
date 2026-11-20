@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, ChevronDown, Lock, ShieldCheck, ShoppingBag, Store, Truck } from "lucide-react";
+import { ArrowLeft, ChevronDown, Lock, ShoppingBag, Store, Truck } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AccountBar } from "@/components/layout/AccountBar";
@@ -122,10 +122,6 @@ export default function Checkout() {
             <div className="enter">
               <p className="text-xs tracking-[0.3em] text-muted-foreground">FINALIZAR COMPRA</p>
               <h1 className="mt-3 text-[clamp(2.5rem,7vw,4.5rem)] leading-none font-light">Ya casi <em className="text-primary">es suyo.</em></h1>
-              <p className="mt-4 flex items-start gap-2 text-sm text-muted-foreground">
-                <ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary" />
-                Compra de demostración: no se pedirán datos bancarios ni se realizará ningún cobro.
-              </p>
             </div>
 
             <details className="group mt-8 rounded-3xl bg-card ring-1 ring-border lg:hidden">
@@ -238,12 +234,6 @@ export default function Checkout() {
                       ))}
                     </div>
                   </fieldset>
-                  {form.payment !== "contraentrega" && (
-                    <p className="enter mt-4 flex items-start gap-2 rounded-2xl bg-muted p-4 text-sm text-muted-foreground">
-                      <Lock className="mt-0.5 size-4 shrink-0 text-primary" />
-                      En la versión final te llevaremos a una pasarela de pagos segura para completar el pago. En esta demostración no se piden datos bancarios.
-                    </p>
-                  )}
 
                   <label className="mt-6 flex cursor-pointer items-start gap-3 text-sm">
                     <input id={id("consent")} type="checkbox" checked={form.consent} onChange={(e) => set("consent", e.target.checked)} onBlur={blur("consent")}

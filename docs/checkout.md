@@ -6,7 +6,7 @@ El botón **Finalizar compra** de la cesta lleva a `/finalizar-compra`. Ahí se 
 
 1. **Tus datos:** nombre y apellido, correo, celular (10 dígitos que empiezan por 3; se acepta `+57`, espacios y guiones), tipo y número de documento. Si hay una sesión iniciada, se completan el nombre y el correo.
 2. **Entrega:** envío a domicilio (departamento, ciudad o municipio, dirección, barrio y, opcionalmente, apartamento o torre) o recogida en la clínica, que no pide dirección. Las indicaciones son opcionales (máximo 200 caracteres).
-3. **Pago:** contra entrega (o en la clínica al recoger), tarjeta o PSE. Para tarjeta y PSE solo se informa que la versión final llevará a una pasarela de pagos.
+3. **Pago:** contra entrega (o en la clínica al recoger), tarjeta o PSE. Tarjeta y PSE se registran como método elegido; todavía no hay pasarela de pagos. La interfaz no muestra avisos de demostración.
 4. **Autorización de datos personales:** casilla obligatoria.
 5. **Confirmación:** número de pedido, dirección o recogida, fecha estimada (días hábiles de lunes a sábado, sin festivos), método de pago y resumen. La cesta se vacía.
 

@@ -6,6 +6,7 @@ El cliente trata el JSON recibido como unknown y solo lo entrega a la interfaz d
 | --- | --- |
 | GET /api/products | Objeto con products: array de productos completos; IDs enteros positivos únicos, precios finitos no negativos y tipos de mascota reconocidos. |
 | POST /api/orders | Objeto con id no vacío, total finito no negativo y createdAt como fecha/hora ISO con zona horaria. |
+| GET /api/orders | Objeto con orders: array de pedidos con id, total, createdAt, items (id y qty enteros positivos), delivery (domicilio o recoger) y payment (contraentrega, tarjeta o pse); IDs únicos. |
 | GET /api/bookings | Objeto con bookings: array de reservas completas e IDs únicos. |
 | POST /api/bookings | Reserva completa con id, pet, species, service, date y time. email y reason son strings opcionales. |
 | GET /api/bookings/availability | Objeto con date y unavailableSlots: array de horas HH:mm. La fecha debe coincidir con la solicitada. |

@@ -24,6 +24,33 @@ export function removeLocalStorageItem(key: string): boolean {
   }
 }
 
+// sessionStorage: dura mientras la pestaña esté abierta (sobrevive a recargar, no a cerrarla).
+export function getSessionStorageItem(key: string): string | null {
+  try {
+    return window.sessionStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+export function setSessionStorageItem(key: string, value: string): boolean {
+  try {
+    window.sessionStorage.setItem(key, value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function removeSessionStorageItem(key: string): boolean {
+  try {
+    window.sessionStorage.removeItem(key);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** Lee JSON persistido o usa el valor inicial si no existe o no se puede leer. */
 export function readLocalStorageJson<T>(key: string, fallback: T): T {
   try {

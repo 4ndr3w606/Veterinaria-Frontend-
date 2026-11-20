@@ -12,6 +12,7 @@ import {
   isBookingsResponse,
   isEmptyResponse,
   isOrderResult,
+  isOrdersResponse,
   isProductsResponse,
   isRecord,
 } from "@/lib/apiValidation";
@@ -23,6 +24,7 @@ import type {
   BookingAvailability,
   BookingInput,
   OrderInput,
+  OrderRecord,
   OrderResult,
   Product,
 } from "@/lib/types";
@@ -114,6 +116,20 @@ function readLocalBookings(): Booking[] {
   }
 }
 
+type LocalOrder = OrderRecord & { email: string | null };
+
+/** Pedidos guardados en modo local. Se descartan uno a uno los registros antiguos o dañados. */
+function readLocalOrders(): LocalOrder[] {
+  try {
+    const value: unknown = JSON.parse(getLocalStorageItem("lumina:orders") ?? "[]");
+    if (!Array.isArray(value)) return [];
+    return value.filter((order): order is LocalOrder =>
+      isOrdersResponse({ orders: [order] }) && (order.email === null || typeof order.email === "string"));
+  } catch {
+    return [];
+  }
+}
+
 function saveLocalBookings(bookings: Booking[]) {
   setLocalStorageItem(BOOKINGS_KEY, JSON.stringify(bookings));
 }
@@ -151,6 +167,14 @@ export const api = {
       // El pedido de demostración se acepta aunque el navegador no permita persistirlo.
     }
     return result;
+  },
+
+  /** Pedidos de la cuenta, del más reciente al más antiguo. */
+  async getOrders(ownerEmail: string): Promise<OrderRecord[]> {
+    const list = BASE
+      ? (await http("/api/orders", isOrdersResponse)).orders
+      : readLocalOrders().filter((order) => order.email === ownerEmail);
+    return [...list].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   },
 
   async getBookings(ownerEmail: string): Promise<Booking[]> {

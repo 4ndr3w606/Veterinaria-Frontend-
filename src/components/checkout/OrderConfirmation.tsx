@@ -41,13 +41,9 @@ export function OrderConfirmation({ confirmed }: { confirmed: ConfirmedOrder }) 
           <strong className="font-mono text-foreground">#{order.id}</strong>.
         </p>
         <p className="mt-1 text-sm text-muted-foreground">
-          Te enviaríamos la confirmación a <span className="text-foreground">{details.customer.email}</span>.
+          Enviaremos la confirmación a <span className="text-foreground">{details.customer.email}</span>.
         </p>
       </div>
-
-      <p role="note" className="enter mt-8 rounded-2xl border border-dashed border-primary/40 p-4 text-center text-sm text-muted-foreground" style={{ "--i": 1 } as React.CSSProperties}>
-        Compra de demostración: no se realizó ningún cobro ni se enviará ningún producto.
-      </p>
 
       <div className="enter mt-8 grid gap-4 sm:grid-cols-2" style={{ "--i": 2 } as React.CSSProperties}>
         <section className="rounded-3xl bg-card p-6 ring-1 ring-border" aria-labelledby="conf-delivery">
@@ -81,7 +77,7 @@ export function OrderConfirmation({ confirmed }: { confirmed: ConfirmedOrder }) 
           <p className="mt-3 text-sm text-muted-foreground">
             {details.payment === "contraentrega"
               ? `Pagarás ${money(order.total)} al recibir tu pedido.`
-              : "En la versión final, aquí te llevaríamos a la pasarela de pagos para completar el cobro."}
+              : `Total del pedido: ${money(order.total)}.`}
           </p>
         </section>
       </div>
